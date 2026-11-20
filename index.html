@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>GTA VI Glitch and Money Exploit Tracker</title>
-    <meta name="description" content="Sortable tracker of GTA VI money exploits, duplication claims and physics glitches, with platform, reproducibility, patch status and game mode for each entry." />
+    <meta name="description" content="Sortable tracker of GTA VI money exploits, duplication claims and physics glitches, with platform, reproducibility, patch status and game mode for each entry, plus a car value list for Moses, Pay 'n' Spray and Randy." />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b3283f'/%3E%3Cpath d='M7.5 10.5 12 21.5l4.5-11M22.5 10.5v11' fill='none' stroke='%23fbf8f3' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
     <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
@@ -33,6 +33,7 @@
       <nav class="jump" aria-label="Sections">
         <a href="#matrix-title" data-jump="matrix-title">Glitch matrix</a>
         <a href="#plan-title" data-jump="plan-title">Money plan by chapter</a>
+        <a href="#cars-title" data-jump="cars-title">Car value list</a>
         <a href="#earners-title" data-jump="earners-title">Legitimate earners</a>
         <a href="#legend-title" data-jump="legend-title">How to read the matrix</a>
       </nav>
@@ -47,10 +48,16 @@
           <p class="count" id="count" aria-live="polite"></p>
         </div>
 
-        <form class="toolbar" id="toolbar" aria-label="Filter and sort the matrix" onsubmit="return false">
+        <form class="toolbar" id="toolbar" aria-label="Filter and sort the matrix">
           <div class="field field-search">
             <label for="q">Search</label>
-            <input id="q" type="search" placeholder="Name, trigger, reporter" autocomplete="off" />
+            <div class="search-row">
+              <input id="q" type="search" placeholder="Name, trigger, reporter" autocomplete="off" />
+              <button type="submit" class="btn btn-primary" id="search-btn">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="4.5" /><path d="m10.5 10.5 3 3" /></svg>
+                Search
+              </button>
+            </div>
           </div>
           <div class="field">
             <label for="f-category">Category</label>
@@ -70,14 +77,14 @@
           </div>
           <div class="toolbar-actions">
             <button type="button" class="btn" id="reset">Reset</button>
-            <button type="button" class="btn btn-primary" id="export">
+            <button type="button" class="btn" id="export">
               <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13h11" /></svg>
               Export CSV
             </button>
           </div>
           <div class="toggle-row">
             <label class="toggle"><input type="checkbox" id="f-money" /> Money-related only</label>
-            <span class="hint">Select a row for steps, payout, caveats and sources.</span>
+            <span class="hint">Results update as you type. Press Search or Enter to jump to them. Select a row for steps, payout, caveats and sources.</span>
           </div>
         </form>
 
@@ -99,6 +106,58 @@
           <p class="count">The best-paying route at each stage, exploits included</p>
         </div>
         <ol class="plan" id="plan"></ol>
+
+        <div class="section-head">
+          <h2 id="cars-title" tabindex="-1">Car value list</h2>
+          <p class="count" id="car-count" aria-live="polite"></p>
+        </div>
+        <div class="car-notes" id="car-notes"></div>
+        <div class="buyers" id="buyers"></div>
+
+        <form class="toolbar toolbar-cars" id="car-toolbar" aria-label="Filter and sort the car list">
+          <div class="field field-search">
+            <label for="car-q">Search cars</label>
+            <div class="search-row">
+              <input id="car-q" type="search" placeholder="Model, brand, location" autocomplete="off" />
+              <button type="submit" class="btn btn-primary" id="car-search-btn">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="4.5" /><path d="m10.5 10.5 3 3" /></svg>
+                Search
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="car-buyer">Sells to</label>
+            <select id="car-buyer"></select>
+          </div>
+          <div class="field">
+            <label for="car-tracker">Tracker</label>
+            <select id="car-tracker"></select>
+          </div>
+          <div class="field">
+            <label for="car-sort">Sort by</label>
+            <select id="car-sort"></select>
+          </div>
+          <div class="toolbar-actions">
+            <button type="button" class="btn" id="car-reset">Reset</button>
+            <button type="button" class="btn" id="car-export">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13h11" /></svg>
+              Export CSV
+            </button>
+          </div>
+        </form>
+
+        <div class="table-wrap" id="cars" tabindex="-1">
+          <table class="matrix cars" aria-labelledby="cars-title">
+            <thead>
+              <tr id="car-head"></tr>
+            </thead>
+            <tbody id="car-rows"></tbody>
+          </table>
+          <div class="empty" id="car-empty" hidden>
+            <p>No cars match these filters.</p>
+            <button type="button" class="btn" id="car-reset-empty">Clear filters</button>
+          </div>
+        </div>
 
         <div class="section-head">
           <h2 id="earners-title" tabindex="-1">Legitimate earners by chapter</h2>

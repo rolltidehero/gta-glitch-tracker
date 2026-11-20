@@ -11,18 +11,25 @@
               |
               v
        data.js             (generated: what the website loads)
-       ../gta6_glitch_tracker.csv          (generated: the spreadsheet export)
+       ../gta6_glitch_tracker.csv          (generated: glitch matrix export)
+       ../gta6_car_values.csv              (generated: car value list export)
+       exports/*.csv                       (generated: copies of both CSVs kept in git)
        ../gta6_tracker_last_update.json    (generated: what changed in this run)
+
+   After a successful rebuild the script commits the change and, when the
+   folder has a GitHub remote called "origin", pushes it.
 
    HOW TO RUN
    ----------
        node update-tracker.js                 Full run: validate, rebuild, test, commit
        node update-tracker.js --dry-run       Validate and test only. Writes nothing.
        node update-tracker.js --check-links   Also test every source URL (slower)
+       node update-tracker.js --refresh-cars  Also pull the newest car values from IGN's vehicle table
        node update-tracker.js --build 1.003.000   Record a new game build number
        node update-tracker.js --as-of "November 25, 2026"   Set the "Checked" date by hand
        node update-tracker.js --no-stamp      Keep the "Checked" date as it is
        node update-tracker.js --no-commit     Rebuild but do not make a git commit
+       node update-tracker.js --no-push       Commit but do not push to GitHub
        node update-tracker.js --message "Mark M-05 as verified"   Custom commit subject
        node update-tracker.js --compact       Shorter progress output
        node update-tracker.js --help          Show this help
@@ -33,20 +40,24 @@
    ----------------------------------------
     1. Preflight checks            Node version, required files
     2. Load tracker data           Read and parse tracker-data.json
-    3. Validate tracker data       IDs, allowed values, source links, cross references
-    4. Stamp date and build        Update "Checked" date and build number
-    5. Generate data.js            Fill defaults and write the website data file
-    6. Generate CSV                Write the spreadsheet export
-    7. Self-test generated files   Load data.js like a browser would, re-read the CSV
-    8. Build change report         Compare against the last committed version
-    9. Check source links          Only with --check-links
-   10. Commit to git               Skipped with --no-commit or --dry-run
+    3. Refresh car values          Only with --refresh-cars (a network failure is a warning)
+    4. Validate tracker data       IDs, allowed values, source links, cross references
+    5. Stamp date and build        Update "Checked" date and build number
+    6. Generate data.js            Fill defaults and write the website data file
+    7. Generate CSV files          Write the glitch matrix and car value exports
+    8. Self-test generated files   Load data.js like a browser would, re-read the CSVs
+    9. Build change report         Compare against the last committed version
+   10. Check source links          Only with --check-links
+   11. Commit to git               Skipped with --no-commit or --dry-run
+   12. Push to GitHub              Only when there is something new to push
 
    SAFETY
    ------
    - Every problem found in step 3 is listed at once, with the entry it belongs to.
-   - If anything fails after files were written, the previous data.js, CSV and
+   - If anything fails after files were written, the previous data.js, CSVs and
      tracker-data.json are restored, so the website never ends up half updated.
+   - A failed IGN refresh or a failed push never undoes a good rebuild. Both are
+     reported as warnings with the reason and what to do next.
    - Publishing the website is a separate step. This script prints a reminder.
 
    EXIT CODES
@@ -72,6 +83,11 @@ const PATHS = {
   appJs: path.join(SITE_DIR, 'app.js'),
   indexHtml: path.join(SITE_DIR, 'index.html'),
   csv: path.resolve(SITE_DIR, '..', 'gta6_glitch_tracker.csv'),
+  carsCsv: path.resolve(SITE_DIR, '..', 'gta6_car_values.csv'),
+  /* Copies inside the repository so the CSVs are pushed to GitHub too. */
+  exportsDir: path.join(SITE_DIR, 'exports'),
+  csvCopy: path.join(SITE_DIR, 'exports', 'gta6_glitch_tracker.csv'),
+  carsCsvCopy: path.join(SITE_DIR, 'exports', 'gta6_car_values.csv'),
   report: path.resolve(SITE_DIR, '..', 'gta6_tracker_last_update.json'),
 };
 
@@ -87,6 +103,25 @@ const ALLOWED = {
   platform: ['Reported', 'Unspecified', 'Not affected', 'Not released'],
   sp: ['Yes', 'No'],
   online: ['Yes', 'No', 'No online mode'],
+  tracker: ['None', 'Standard', 'Advanced', 'Military', 'Disputed', 'Not published'],
+};
+
+/* The three places that buy stolen cars. "carBuyers" in the data file must use these ids. */
+const BUYERS = ['Moses', "Pay 'n' Spray", 'Randy'];
+
+/* Fields a car in the "cars" list may have. Only name, tracker and sources are required. */
+const CAR_FIELDS = ['name', 'ignName', 'brand', 'type', 'era', 'tracker', 'sellValue', 'valueText', 'estValue', 'registerCost', 'condition', 'wishList', 'buyers', 'note', 'sources'];
+
+/* Where --refresh-cars reads car values from (IGN's public vehicle table). */
+const IGN = {
+  endpoint: 'https://mollusk.apis.ign.com/graphql',
+  slug: 'gta-6-vehicles',
+  sourceKey: 'ignVehicles',
+  sourceName: 'IGN vehicles guide',
+  sourceUrl: 'https://www.ign.com/wikis/gta-6/Vehicles',
+  timeoutMs: 20000,
+  /* Fewer rows than this means the table changed shape; nothing is imported then. */
+  minRows: 20,
 };
 
 /* Which ID prefix belongs to which categories (a mismatch is only a warning). */
@@ -119,7 +154,7 @@ const LINK_CONCURRENCY = 8;
    Command line options
    --------------------------------------------------------------------------- */
 function parseArgs(argv) {
-  const opts = { dryRun: false, stamp: true, asOf: null, build: null, checkLinks: false, commit: true, message: null, compact: false, help: false };
+  const opts = { dryRun: false, stamp: true, asOf: null, build: null, checkLinks: false, refreshCars: false, commit: true, push: true, message: null, compact: false, help: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const next = () => {
@@ -132,7 +167,9 @@ function parseArgs(argv) {
     else if (a === '--as-of') opts.asOf = next();
     else if (a === '--build') opts.build = next();
     else if (a === '--check-links') opts.checkLinks = true;
+    else if (a === '--refresh-cars') opts.refreshCars = true;
     else if (a === '--no-commit') opts.commit = false;
+    else if (a === '--no-push') opts.push = false;
     else if (a === '--message') opts.message = next();
     else if (a === '--compact') opts.compact = true;
     else if (a === '--help' || a === '-h') opts.help = true;
@@ -163,19 +200,21 @@ class StepError extends Error {
 const STEPS = [
   { name: 'Preflight checks' },
   { name: 'Load tracker data' },
+  { name: 'Refresh car values' },
   { name: 'Validate tracker data' },
   { name: 'Stamp date and build' },
   { name: 'Generate data.js' },
-  { name: 'Generate CSV' },
+  { name: 'Generate CSV files' },
   { name: 'Self-test generated files' },
   { name: 'Build change report' },
   { name: 'Check source links' },
   { name: 'Commit to git' },
+  { name: 'Push to GitHub' },
 ];
 STEPS.forEach((s, i) => { s.n = i + 1; s.state = 'pending'; s.note = ''; s.ms = 0; });
 
-const MARK = { pending: '[ ]', running: '[>]', done: '[x]', skipped: '[-]', failed: '[!]' };
-const LABEL = { pending: 'remaining', running: 'IN PROGRESS', done: 'completed', skipped: 'skipped', failed: 'FAILED' };
+const MARK = { pending: '[ ]', running: '[>]', done: '[x]', skipped: '[-]', failed: '[!]', warned: '[~]' };
+const LABEL = { pending: 'remaining', running: 'IN PROGRESS', done: 'completed', skipped: 'skipped', failed: 'FAILED', warned: 'WARNING' };
 const RULE = '-'.repeat(72);
 let COMPACT = false;
 const warnings = [];
@@ -189,7 +228,7 @@ function board() {
 }
 
 function counts() {
-  const c = { done: 0, skipped: 0, pending: 0, failed: 0, running: 0 };
+  const c = { done: 0, skipped: 0, pending: 0, failed: 0, running: 0, warned: 0 };
   STEPS.forEach((s) => { c[s.state]++; });
   return c;
 }
@@ -204,7 +243,7 @@ async function runStep(index, fn) {
   const c = counts();
   console.log('\n' + RULE);
   console.log('STEP ' + step.n + ' of ' + STEPS.length + ': ' + step.name);
-  console.log('Completed: ' + (c.done + c.skipped) + '   In progress: step ' + step.n + '   Remaining after this: ' + c.pending);
+  console.log('Completed: ' + (c.done + c.skipped + c.warned) + '   In progress: step ' + step.n + '   Remaining after this: ' + c.pending);
   if (!COMPACT) { console.log(RULE); board(); }
   console.log(RULE);
   const t0 = Date.now();
@@ -224,6 +263,13 @@ async function runStep(index, fn) {
 function skip(step, reason) {
   step.state = 'skipped';
   step.note = reason;
+}
+
+/* Marks a step as finished with a problem that must not stop the run. */
+function soft(step, note, message) {
+  step.state = 'warned';
+  step.note = note;
+  warn(message);
 }
 
 /* ---------------------------------------------------------------------------
@@ -310,6 +356,106 @@ function parseCsv(text) {
   }
   if (cell.length || row.length) { row.push(cell); rows.push(row); }
   return rows;
+}
+
+/* "17,160" or "$17,160" -> 17160. Empty or zero -> null. */
+function moneyNumber(text) {
+  const n = Number(String(text === undefined || text === null ? '' : text).replace(/[^0-9.]/g, ''));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function dollars(n) { return '$' + Number(n).toLocaleString('en-US'); }
+
+/* IGN writes model years without the apostrophe ("96 Infernus"). */
+function carDisplayName(ignName) { return /^\d\d(s)? /.test(ignName) ? "'" + ignName : ignName; }
+
+/* ---------------------------------------------------------------------------
+   Step 3: car value refresh from IGN (only with --refresh-cars)
+   --------------------------------------------------------------------------- */
+async function fetchIgnVehicles() {
+  const query = 'query DataTable($slug: String) {\n  dataTable(slug: $slug) {\n    content {\n      id\n      title\n      description\n    }\n    dataTable {\n      columns {\n        header\n        field\n        width\n        columnColor\n        rowColor\n        type\n        composite\n      }\n      data\n    }\n  }\n}\n';
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), IGN.timeoutMs);
+  let res;
+  try {
+    res = await fetch(IGN.endpoint, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'content-type': 'application/json',
+        accept: '*/*',
+        'x-apollo-operation-name': 'DataTable',
+        'apollographql-client-name': 'kraken',
+        origin: 'https://www.ign.com',
+        referer: 'https://www.ign.com/',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36',
+      },
+      body: JSON.stringify({ operationName: 'DataTable', variables: { slug: IGN.slug }, query }),
+    });
+  } catch (err) {
+    throw new Error(err.name === 'AbortError' ? 'no answer within ' + IGN.timeoutMs / 1000 + ' seconds' : 'network error: ' + ((err.cause && err.cause.code) || err.message));
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!res.ok) throw new Error('IGN answered HTTP ' + res.status);
+  let body;
+  try { body = await res.json(); } catch (err) { throw new Error('IGN did not return JSON'); }
+  const table = body && body.data && body.data.dataTable && body.data.dataTable.dataTable;
+  if (!table) throw new Error('the answer has no vehicle table' + (body && body.errors ? ' (' + JSON.stringify(body.errors).slice(0, 160) + ')' : ''));
+  let rows = table.data;
+  if (isString(rows)) { try { rows = JSON.parse(rows); } catch (err) { throw new Error('the vehicle table could not be parsed'); } }
+  if (!Array.isArray(rows) || rows.length < IGN.minRows) throw new Error('the vehicle table has only ' + (Array.isArray(rows) ? rows.length : 0) + ' rows, expected ' + IGN.minRows + ' or more');
+  if (!rows.some((r) => r && filled(r.Vehicle) && moneyNumber(r['Sell Value']) !== null)) throw new Error('the table no longer has "Vehicle" and "Sell Value" columns');
+  return rows;
+}
+
+/* Copies IGN's values into data.cars. Hand-written fields (note, wishList, buyers,
+   display name, extra sources) are never overwritten. Returns what changed. */
+function mergeIgnCars(data, rows) {
+  if (!Array.isArray(data.cars)) data.cars = [];
+  if (!data.sources || typeof data.sources !== 'object') data.sources = {};
+  const byIgnName = {};
+  data.cars.forEach((c) => { if (c && filled(c.ignName)) byIgnName[c.ignName] = c; });
+  const result = { tableRows: rows.length, priced: 0, added: [], updated: [], noLongerListed: [] };
+  const seen = {};
+  rows.forEach((r) => {
+    if (!r || !filled(r.Vehicle)) return;
+    const sell = moneyNumber(r['Sell Value']);
+    if (sell === null) return; /* IGN has not priced this vehicle yet */
+    result.priced++;
+    seen[r.Vehicle] = true;
+    const fresh = {
+      brand: filled(r.Brand) ? r.Brand.trim() : null,
+      type: filled(r.Type) ? r.Type.trim() : null,
+      era: filled(r.Era) ? r.Era.trim() : null,
+      tracker: filled(r.Tracker) && ALLOWED.tracker.indexOf(r.Tracker.trim()) !== -1 ? r.Tracker.trim() : null,
+      sellValue: sell,
+      registerCost: moneyNumber(r['Cost to Register']),
+      condition: filled(r['Body Condition']) ? r['Body Condition'].trim() : null,
+    };
+    if (filled(r.Tracker) && fresh.tracker === null) warn('IGN lists an unknown tracker type "' + r.Tracker + '" for ' + r.Vehicle + '. Add it to ALLOWED.tracker in the script if it is real.');
+    const car = byIgnName[r.Vehicle];
+    if (!car) {
+      data.cars.push({
+        name: carDisplayName(r.Vehicle), ignName: r.Vehicle, brand: fresh.brand || '', type: fresh.type || '', era: fresh.era || '',
+        tracker: fresh.tracker || 'Not published', sellValue: sell, registerCost: fresh.registerCost, condition: fresh.condition || '',
+        note: '', sources: [IGN.sourceKey],
+      });
+      result.added.push({ name: carDisplayName(r.Vehicle), sellValue: sell });
+      return;
+    }
+    const fields = [];
+    Object.keys(fresh).forEach((k) => {
+      /* An empty IGN cell never erases a value we already have. */
+      if (fresh[k] === null || fresh[k] === car[k]) return;
+      fields.push({ field: k, from: car[k] === undefined ? null : car[k], to: fresh[k] });
+      car[k] = fresh[k];
+    });
+    if (fields.length) result.updated.push({ name: car.name, fields });
+  });
+  data.cars.forEach((c) => { if (c && filled(c.ignName) && !seen[c.ignName]) result.noLongerListed.push(c.name); });
+  if (!data.sources[IGN.sourceKey]) data.sources[IGN.sourceKey] = { name: IGN.sourceName, url: IGN.sourceUrl };
+  return result;
 }
 
 function git(args, options) {
@@ -433,6 +579,70 @@ function validate(data) {
     });
   }
 
+  /* car buyers (the three cards above the car value list), optional */
+  if (data.carBuyers !== undefined) {
+    if (!Array.isArray(data.carBuyers)) err('carBuyers', 'must be a list');
+    else data.carBuyers.forEach((b, i) => {
+      const where = 'carBuyers[' + i + ']' + (b && b.id ? ' (' + b.id + ')' : '');
+      if (!b || typeof b !== 'object') { err(where, 'must be an object'); return; }
+      if (BUYERS.indexOf(b.id) === -1) err(where, '"id" must be one of: ' + BUYERS.join(', '));
+      ['name', 'place'].forEach((k) => { if (!filled(b[k])) err(where, 'needs "' + k + '"'); });
+      if (!Array.isArray(b.rows) || b.rows.length === 0) err(where, 'needs "rows", a list of [label, text] pairs');
+      else b.rows.forEach((r, j) => {
+        if (!Array.isArray(r) || r.length !== 2 || !filled(r[0])) { err(where + '.rows[' + j + ']', 'must be a [label, text] pair'); return; }
+        checkRichText(where + '.rows[' + j + ']', r[1]);
+      });
+      if (b.topNote !== undefined && !isString(b.topNote)) err(where, '"topNote" must be text');
+      checkSources(where, b.sources);
+    });
+  }
+
+  /* car list notes (the paragraphs above the car value list), optional */
+  if (data.carNotes !== undefined) {
+    if (!Array.isArray(data.carNotes)) err('carNotes', 'must be a list');
+    else data.carNotes.forEach((p, j) => checkRichText('carNotes[' + j + ']', p));
+  }
+
+  /* cars (the car value list), optional */
+  if (data.cars !== undefined) {
+    if (!Array.isArray(data.cars)) err('cars', 'must be a list');
+    else {
+      const seenIgn = {};
+      const seenName = {};
+      const amount = (where, c, k) => {
+        if (c[k] !== undefined && c[k] !== null && !(typeof c[k] === 'number' && Number.isFinite(c[k]) && c[k] > 0)) err(where, '"' + k + '" must be a positive number or null (write 17160, not "$17,160")');
+      };
+      data.cars.forEach((c, i) => {
+        const where = 'cars[' + i + ']' + (c && c.name ? ' (' + c.name + ')' : '');
+        if (!c || typeof c !== 'object') { err(where, 'must be an object'); return; }
+        if (!filled(c.name)) err(where, 'needs a "name"');
+        if (ALLOWED.tracker.indexOf(c.tracker) === -1) err(where, '"tracker" is "' + c.tracker + '" but must be one of: ' + ALLOWED.tracker.join(', '));
+        ['ignName', 'brand', 'type', 'era', 'condition', 'note', 'valueText'].forEach((k) => {
+          if (c[k] !== undefined && !isString(c[k])) err(where, '"' + k + '" must be text');
+        });
+        ['sellValue', 'estValue', 'registerCost'].forEach((k) => amount(where, c, k));
+        if ((c.sellValue === undefined || c.sellValue === null) && !filled(c.valueText)) err(where, 'needs a "sellValue" number or a "valueText" such as "Not published"');
+        if (c.wishList !== undefined && typeof c.wishList !== 'boolean') err(where, '"wishList" must be true or false');
+        if (c.buyers !== undefined) {
+          if (!Array.isArray(c.buyers)) err(where, '"buyers" must be a list');
+          else c.buyers.forEach((b) => { if (BUYERS.indexOf(b) === -1) err(where, 'unknown buyer "' + b + '". Use: ' + BUYERS.join(', ')); });
+        }
+        if (!Array.isArray(c.sources) || c.sources.length === 0) err(where, 'needs at least one source key in "sources"');
+        else checkSources(where, c.sources);
+        Object.keys(c).forEach((k) => { if (CAR_FIELDS.indexOf(k) === -1) err(where, 'unknown field "' + k + '"'); });
+        if (filled(c.ignName)) {
+          if (seenIgn[c.ignName] !== undefined) err(where, 'duplicate "ignName", already used by cars[' + seenIgn[c.ignName] + ']');
+          else seenIgn[c.ignName] = i;
+        }
+        if (filled(c.name)) {
+          const key = ((c.brand || '') + ' ' + c.name).trim().toLowerCase();
+          if (seenName[key] !== undefined) warn(where + ' has the same brand and name as cars[' + seenName[key] + ']. Merge them if they are the same car.');
+          else seenName[key] = i;
+        }
+      });
+    }
+  }
+
   /* findings (the three cards at the top), optional */
   if (data.findings !== undefined) {
     if (!Array.isArray(data.findings)) err('findings', 'must be a list');
@@ -490,10 +700,45 @@ function resolveData(data) {
     entries,
     ladder: data.ladder,
     plan: data.plan || [],
+    carBuyers: data.carBuyers || [],
+    carNotes: data.carNotes || [],
+    cars: (data.cars || []).map(resolveCar),
     findings: data.findings || [],
     footnotes: data.footnotes || [],
   };
   return fillPlaceholders(resolved, data.meta);
+}
+
+/* Fills in what can be worked out for one car: who buys it, from which chapter,
+   the value text the page shows and the number used for sorting. */
+function resolveCar(c) {
+  let buyers;
+  if (Array.isArray(c.buyers)) buyers = c.buyers.slice();
+  else if (c.wishList === true) buyers = ['Randy'];
+  else if (c.tracker === 'None') buyers = ['Moses', "Pay 'n' Spray"];
+  else if (c.tracker === 'Standard') buyers = ["Pay 'n' Spray"];
+  else buyers = [];
+  const noBuyer = c.tracker === 'Advanced' ? 'No confirmed buyer' : (c.tracker === 'Military' ? 'No buyer known' : 'Not published');
+  const sellValue = typeof c.sellValue === 'number' ? c.sellValue : null;
+  const estValue = typeof c.estValue === 'number' ? c.estValue : null;
+  return {
+    name: c.name,
+    brand: c.brand || '',
+    type: c.type || '',
+    era: c.era || '',
+    tracker: c.tracker,
+    wishList: c.wishList === true,
+    buyers,
+    buyerLabel: buyers.length ? buyers.join(', ') : noBuyer,
+    chapter: buyers.indexOf('Moses') !== -1 ? 'Chapter 2' : (buyers.length ? 'Chapter 3' : ''),
+    sellValue,
+    valueText: filled(c.valueText) ? c.valueText : (sellValue !== null ? dollars(sellValue) : 'Not published'),
+    sortValue: sellValue !== null ? sellValue : estValue,
+    registerCost: typeof c.registerCost === 'number' ? c.registerCost : null,
+    condition: c.condition || '',
+    note: c.note || '',
+    sources: c.sources,
+  };
 }
 
 /* The CSV code is written into data.js so the website's "Export CSV" button and
@@ -520,19 +765,40 @@ const CSV_CODE = `
     ['Source URLs', function (e) { return e.sources.map(function (k) { return DATA.sources[k].url; }).join(' | '); }],
   ];
 
-  function toCsv(rows) {
+  var CAR_CSV_COLUMNS = [
+    ['Vehicle', function (c) { return c.name; }],
+    ['Brand', function (c) { return c.brand; }],
+    ['Class', function (c) { return c.type; }],
+    ['Era', function (c) { return c.era; }],
+    ['Tracker', function (c) { return c.tracker; }],
+    ['Sells to', function (c) { return c.buyerLabel; }],
+    ['Earliest chapter', function (c) { return c.chapter; }],
+    ['Value as shown', function (c) { return c.valueText; }],
+    ['Scan sell value (USD)', function (c) { return c.sellValue == null ? '' : c.sellValue; }],
+    ['Cost to register (USD)', function (c) { return c.registerCost == null ? '' : c.registerCost; }],
+    ['Condition when scanned', function (c) { return c.condition; }],
+    ['On Randy Wish List', function (c) { return c.wishList ? 'Yes' : 'No'; }],
+    ['Notes', function (c) { return c.note; }],
+    ['Source URLs', function (c) { return c.sources.map(function (k) { return DATA.sources[k].url; }).join(' | '); }],
+  ];
+
+  function csvFrom(columns, rows) {
     function cell(v) {
       var s = String(v == null ? '' : v);
       return /[",\\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
     }
-    var lines = [CSV_COLUMNS.map(function (c) { return cell(c[0]); }).join(',')];
+    var lines = [columns.map(function (c) { return cell(c[0]); }).join(',')];
     rows.forEach(function (e) {
-      lines.push(CSV_COLUMNS.map(function (c) { return cell(c[1](e)); }).join(','));
+      lines.push(columns.map(function (c) { return cell(c[1](e)); }).join(','));
     });
     return lines.join('\\r\\n') + '\\r\\n';
   }
+
+  function toCsv(rows) { return csvFrom(CSV_COLUMNS, rows); }
+  function toCarsCsv(rows) { return csvFrom(CAR_CSV_COLUMNS, rows); }
 `;
 const CSV_COLUMN_COUNT = 18;
+const CAR_CSV_COLUMN_COUNT = 14;
 
 function renderDataJs(resolved) {
   const json = JSON.stringify(resolved, null, 2).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
@@ -546,6 +812,7 @@ function renderDataJs(resolved) {
     '  var DATA = ' + json.replace(/\n/g, '\n  ') + ';',
     CSV_CODE,
     '  DATA.toCsv = toCsv;',
+    '  DATA.toCarsCsv = toCarsCsv;',
     '  root.TRACKER = DATA;',
     "})(typeof window !== 'undefined' ? window : globalThis);",
     '',
@@ -564,11 +831,12 @@ function buildReport(previous, current, options) {
     build: current.meta.build,
     comparedWith: previous ? 'last git commit' : 'nothing (first run or no git history)',
     dryRun: options.dryRun,
-    totals: { entries: current.entries.length },
+    totals: { entries: current.entries.length, cars: (current.cars || []).length },
     hasChanges: false,
     added: [], removed: [], changed: [],
     metaChanges: [],
     alerts: { carDuplicationVerified: [], newlyPatched: [], buildChanged: false },
+    carChanges: { added: [], removed: [], valueChanged: [] },
     otherSectionsChanged: [],
     warnings: warnings.slice(),
   };
@@ -616,7 +884,21 @@ function buildReport(previous, current, options) {
   });
   report.alerts.buildChanged = (previous.meta || {}).build !== current.meta.build;
 
-  [['ladder', 'Legitimate earners table'], ['plan', 'Money plan'], ['findings', 'Key findings'], ['footnotes', 'Footnotes'], ['sources', 'Source list']].forEach((pair) => {
+  /* Car value list: which cars are new, gone or repriced. */
+  const carKey = (c) => ((c.brand || '') + ' ' + c.name).trim();
+  const oldCars = {};
+  (previous.cars || []).forEach((c) => { oldCars[carKey(c)] = c; });
+  const newCars = {};
+  (current.cars || []).forEach((c) => {
+    const key = carKey(c);
+    newCars[key] = true;
+    const was = oldCars[key];
+    if (!was) report.carChanges.added.push(key);
+    else if (was.valueText !== c.valueText) report.carChanges.valueChanged.push({ car: key, from: was.valueText, to: c.valueText });
+  });
+  Object.keys(oldCars).forEach((key) => { if (!newCars[key]) report.carChanges.removed.push(key); });
+
+  [['ladder', 'Legitimate earners table'], ['plan', 'Money plan'], ['cars', 'Car value list'], ['carBuyers', 'Car buyer cards'], ['carNotes', 'Car list notes'], ['findings', 'Key findings'], ['footnotes', 'Footnotes'], ['sources', 'Source list']].forEach((pair) => {
     if (!same(previous[pair[0]] === undefined ? (pair[0] === 'sources' ? {} : []) : previous[pair[0]], current[pair[0]])) report.otherSectionsChanged.push(pair[1]);
   });
 
@@ -628,7 +910,7 @@ function buildReport(previous, current, options) {
 
 function printReport(report) {
   info('Compared with: ' + report.comparedWith);
-  info('Entries: ' + report.totals.entries + '   Patched: ' + report.totals.patched + '   Verified car duplication methods: ' + report.totals.verifiedCarDuplication);
+  info('Entries: ' + report.totals.entries + '   Cars: ' + report.totals.cars + '   Patched: ' + report.totals.patched + '   Verified car duplication methods: ' + report.totals.verifiedCarDuplication);
   if (report.comparedWith.indexOf('nothing') === 0) return;
   info('Added: ' + report.added.length + '   Removed: ' + report.removed.length + '   Changed: ' + report.changed.length);
   report.added.forEach((e) => info('  + ' + e.id + ' ' + e.name + ' [' + e.category + ', ' + e.repro + ', ' + e.status + ']'));
@@ -638,6 +920,13 @@ function printReport(report) {
     info('  ~ ' + e.id + ' ' + e.name + ': ' + parts.join('; '));
   });
   report.metaChanges.forEach((m) => info('  meta.' + m.field + ': ' + JSON.stringify(m.from) + ' -> ' + JSON.stringify(m.to)));
+  const cc = report.carChanges;
+  if (cc.added.length + cc.removed.length + cc.valueChanged.length) {
+    info('Car value list: ' + cc.added.length + ' added, ' + cc.removed.length + ' removed, ' + cc.valueChanged.length + ' repriced');
+    cc.valueChanged.slice(0, 20).forEach((v) => info('  $ ' + v.car + ': ' + v.from + ' -> ' + v.to));
+    if (cc.added.length && cc.added.length <= 20) info('  + ' + cc.added.join(', '));
+    if (cc.removed.length) info('  - ' + cc.removed.join(', '));
+  }
   if (report.otherSectionsChanged.length) info('Other sections edited: ' + report.otherSectionsChanged.join(', '));
   if (report.alerts.carDuplicationVerified.length) info('ALERT: car duplication verified: ' + report.alerts.carDuplicationVerified.map((e) => e.id).join(', '));
   if (report.alerts.newlyPatched.length) info('ALERT: newly patched: ' + report.alerts.newlyPatched.map((e) => e.id + ' (' + e.status + ')').join(', '));
@@ -722,6 +1011,9 @@ async function main() {
   let resolved;
   let dataJsText;
   let csvText;
+  let carsCsvText;
+  let carRefresh = null;
+  let pushResult = null;
   let report;
   let hasGit = false;
 
@@ -756,12 +1048,44 @@ async function main() {
       }
       if (!data || typeof data !== 'object' || Array.isArray(data)) throw new StepError('tracker-data.json must contain one object.', 'Restore the file from git: git checkout tracker-data.json', 1);
       const n = Array.isArray(data.entries) ? data.entries.length : 0;
-      info('Read ' + (rawJson.length / 1024).toFixed(1) + ' KB, ' + n + ' entries, ' + Object.keys(data.sources || {}).length + ' sources');
+      info('Read ' + (rawJson.length / 1024).toFixed(1) + ' KB, ' + n + ' entries, ' + (Array.isArray(data.cars) ? data.cars.length : 0) + ' cars, ' + Object.keys(data.sources || {}).length + ' sources');
       step.note = n + ' entries loaded';
     });
 
     /* ---- Step 3 ---- */
-    await runStep(2, (step) => {
+    await runStep(2, async (step) => {
+      if (!opts.refreshCars) { skip(step, 'run with --refresh-cars to enable'); return; }
+      if (typeof fetch !== 'function') { skip(step, 'this Node.js version has no fetch'); return; }
+      info('Asking IGN for its vehicle table (' + IGN.sourceUrl + ')...');
+      let rows;
+      try {
+        rows = await fetchIgnVehicles();
+      } catch (err) {
+        /* Never fatal: the tracker is rebuilt from the values it already has. */
+        carRefresh = { result: 'failed', reason: err.message };
+        soft(step, 'IGN not reachable, kept the current values', 'Car values were NOT refreshed: ' + err.message + '. The existing car list was kept. Try again later, or check that ' + IGN.sourceUrl + ' still shows a vehicle table.');
+        return;
+      }
+      const merged = mergeIgnCars(data, rows);
+      carRefresh = Object.assign({ result: 'ok' }, merged);
+      info('IGN table: ' + merged.tableRows + ' vehicles, ' + merged.priced + ' with a sell value');
+      info('New cars: ' + merged.added.length + '   Updated cars: ' + merged.updated.length + '   No longer in the IGN table: ' + merged.noLongerListed.length);
+      merged.added.slice(0, 25).forEach((c) => info('  + ' + c.name + ' ' + dollars(c.sellValue)));
+      if (merged.added.length > 25) info('  ... and ' + (merged.added.length - 25) + ' more');
+      merged.updated.slice(0, 25).forEach((c) => info('  ~ ' + c.name + ': ' + c.fields.map((f) => f.field + ' ' + JSON.stringify(f.from) + ' -> ' + JSON.stringify(f.to)).join('; ')));
+      if (merged.noLongerListed.length) info('  Kept anyway (remove by hand if wrong): ' + merged.noLongerListed.join(', '));
+      const changed = merged.added.length + merged.updated.length > 0;
+      if (changed && !opts.dryRun) {
+        remember(PATHS.json);
+        wroteFiles = true;
+        writeAtomic(PATHS.json, JSON.stringify(data, null, 2) + '\n');
+        info('Saved the new car values to tracker-data.json');
+      }
+      step.note = changed ? (merged.added.length + ' new, ' + merged.updated.length + ' updated' + (opts.dryRun ? ' (not saved: dry run)' : '')) : 'already up to date';
+    });
+
+    /* ---- Step 4 ---- */
+    await runStep(3, (step) => {
       const errors = validate(data);
       if (errors.length) {
         console.log('      Found ' + errors.length + ' problem' + (errors.length === 1 ? '' : 's') + ':');
@@ -771,11 +1095,12 @@ async function main() {
       const byCategory = {};
       data.entries.forEach((e) => { byCategory[e.category] = (byCategory[e.category] || 0) + 1; });
       Object.keys(byCategory).forEach((c) => info(String(byCategory[c]).padStart(3) + '  ' + c));
+      info(String((data.cars || []).length).padStart(3) + '  cars in the car value list');
       step.note = 'no errors' + (warnings.length ? ', ' + warnings.length + ' warning' + (warnings.length === 1 ? '' : 's') : '');
     });
 
-    /* ---- Step 4 ---- */
-    await runStep(3, (step) => {
+    /* ---- Step 5 ---- */
+    await runStep(4, (step) => {
       const before = { asOf: data.meta.asOf, build: data.meta.build };
       if (opts.asOf) data.meta.asOf = opts.asOf;
       else if (opts.stamp) data.meta.asOf = todayLabel();
@@ -792,11 +1117,11 @@ async function main() {
       step.note = changed ? (opts.dryRun ? 'would update' : 'updated') : 'no change needed';
     });
 
-    /* ---- Step 5 ---- */
-    await runStep(4, (step) => {
+    /* ---- Step 6 ---- */
+    await runStep(5, (step) => {
       resolved = resolveData(data);
       dataJsText = renderDataJs(resolved);
-      info('Filled defaults for ' + resolved.entries.length + ' entries');
+      info('Filled defaults for ' + resolved.entries.length + ' entries and worked out buyers for ' + resolved.cars.length + ' cars');
       info('data.js size: ' + (dataJsText.length / 1024).toFixed(1) + ' KB');
       if (opts.dryRun) { step.note = 'built in memory only'; return; }
       remember(PATHS.dataJs);
@@ -805,20 +1130,30 @@ async function main() {
       step.note = 'wrote data.js';
     });
 
-    /* ---- Step 6 ---- */
-    await runStep(5, (step) => {
-      const tracker = loadDataJs(dataJsText, 'data.js');
-      csvText = '\ufeff' + tracker.toCsv(tracker.entries);
-      info('CSV rows: ' + tracker.entries.length + ' plus header, ' + (csvText.length / 1024).toFixed(1) + ' KB');
-      if (opts.dryRun) { step.note = 'built in memory only'; return; }
-      remember(PATHS.csv);
-      wroteFiles = true;
-      writeAtomic(PATHS.csv, csvText);
-      step.note = 'wrote ' + path.basename(PATHS.csv);
-    });
-
     /* ---- Step 7 ---- */
     await runStep(6, (step) => {
+      const tracker = loadDataJs(dataJsText, 'data.js');
+      csvText = '\ufeff' + tracker.toCsv(tracker.entries);
+      carsCsvText = '\ufeff' + tracker.toCarsCsv(tracker.cars);
+      info('Glitch matrix CSV: ' + tracker.entries.length + ' rows plus header, ' + (csvText.length / 1024).toFixed(1) + ' KB');
+      info('Car value CSV:     ' + tracker.cars.length + ' rows plus header, ' + (carsCsvText.length / 1024).toFixed(1) + ' KB');
+      if (opts.dryRun) { step.note = 'built in memory only'; return; }
+      try {
+        fs.mkdirSync(PATHS.exportsDir, { recursive: true });
+      } catch (err) {
+        throw new StepError('Cannot create the folder ' + PATHS.exportsDir + ' (' + err.code + ').', 'Check folder permissions.', 2);
+      }
+      [[PATHS.csv, csvText], [PATHS.csvCopy, csvText], [PATHS.carsCsv, carsCsvText], [PATHS.carsCsvCopy, carsCsvText]].forEach((pair) => {
+        remember(pair[0]);
+        wroteFiles = true;
+        writeAtomic(pair[0], pair[1]);
+        info('Wrote ' + pair[0]);
+      });
+      step.note = 'wrote 2 CSV files and their copies in exports/';
+    });
+
+    /* ---- Step 8 ---- */
+    await runStep(7, (step) => {
       const checks = [];
       const check = (label, ok, detail) => {
         checks.push(ok);
@@ -839,6 +1174,18 @@ async function main() {
       const badWidth = rows.filter((r) => r.length !== CSV_COLUMN_COUNT).length;
       check('every CSV row has ' + CSV_COLUMN_COUNT + ' columns', badWidth === 0, badWidth ? badWidth + ' rows differ' : '');
       check('CSV IDs match the data', rows.slice(1).every((r, i) => r[0] === data.entries[i].id));
+      const carCount = (data.cars || []).length;
+      check('car count matches the source', tracker.cars.length === carCount, tracker.cars.length + ' cars');
+      const badCars = tracker.cars.filter((c) => !Array.isArray(c.buyers) || !filled(c.valueText) || !filled(c.buyerLabel));
+      check('every car has buyers and a value text', badCars.length === 0, badCars.length ? badCars.map((c) => c.name).join(', ') : '');
+      const carsCsvOnDisk = opts.dryRun ? carsCsvText : readText(PATHS.carsCsv, 'the car value CSV');
+      const carRows = parseCsv(carsCsvOnDisk.slice(1));
+      check('car CSV has one row per car plus a header', carsCsvOnDisk.charCodeAt(0) === 0xfeff && carRows.length === carCount + 1, carRows.length + ' rows');
+      const badCarWidth = carRows.filter((r) => r.length !== CAR_CSV_COLUMN_COUNT).length;
+      check('every car CSV row has ' + CAR_CSV_COLUMN_COUNT + ' columns', badCarWidth === 0, badCarWidth ? badCarWidth + ' rows differ' : '');
+      if (!opts.dryRun) {
+        check('CSV copies in exports/ match', readText(PATHS.csvCopy, 'exports copy') === csvOnDisk && readText(PATHS.carsCsvCopy, 'exports copy') === carsCsvOnDisk);
+      }
       try {
         new vm.Script(readText(PATHS.appJs, 'app.js'), { filename: 'app.js' });
         check('app.js has no syntax errors', true);
@@ -852,8 +1199,8 @@ async function main() {
       step.note = checks.length + ' checks passed';
     });
 
-    /* ---- Step 8 ---- */
-    await runStep(7, (step) => {
+    /* ---- Step 9 ---- */
+    await runStep(8, (step) => {
       let previous = null;
       if (hasGit) {
         try {
@@ -863,6 +1210,7 @@ async function main() {
         }
       }
       report = buildReport(previous, resolved, opts);
+      report.carRefresh = carRefresh || { result: 'not requested' };
       printReport(report);
       if (!opts.dryRun) {
         writeAtomic(PATHS.report, JSON.stringify(report, null, 2) + '\n');
@@ -871,8 +1219,8 @@ async function main() {
       step.note = report.hasChanges ? (report.added.length + ' added, ' + report.removed.length + ' removed, ' + report.changed.length + ' changed') : 'no differences';
     });
 
-    /* ---- Step 9 ---- */
-    await runStep(8, async (step) => {
+    /* ---- Step 10 ---- */
+    await runStep(9, async (step) => {
       if (!opts.checkLinks) { skip(step, 'run with --check-links to enable'); return; }
       if (typeof fetch !== 'function') { skip(step, 'this Node.js version has no fetch'); return; }
       const results = await checkLinks(data.sources);
@@ -889,8 +1237,8 @@ async function main() {
       step.note = group('ok').length + ' ok, ' + (group('broken').length + group('error').length) + ' need a look';
     });
 
-    /* ---- Step 10 ---- */
-    await runStep(9, (step) => {
+    /* ---- Step 11 ---- */
+    await runStep(10, (step) => {
       if (opts.dryRun) { skip(step, 'dry run'); return; }
       if (!opts.commit) { skip(step, '--no-commit was given'); return; }
       if (!hasGit) { skip(step, 'no git repository in this folder'); return; }
@@ -907,6 +1255,9 @@ async function main() {
           report.added.forEach((e) => body.push('+ ' + e.id + ' ' + e.name));
           report.removed.forEach((e) => body.push('- ' + e.id + ' ' + e.name));
           report.changed.slice(0, 30).forEach((e) => body.push('~ ' + e.id + ': ' + e.fields.map((f) => f.field).join(', ')));
+          const cc = report.carChanges;
+          if (cc.added.length + cc.removed.length + cc.valueChanged.length) body.push('Car value list (' + report.totals.cars + ' cars): ' + cc.added.length + ' added, ' + cc.removed.length + ' removed, ' + cc.valueChanged.length + ' repriced.');
+          if (report.otherSectionsChanged.length) body.push('Sections edited: ' + report.otherSectionsChanged.join(', ') + '.');
         }
         git(['commit', '-q', '-m', subject, '-m', body.join('\n') || 'Rebuilt generated files.', '-m', COMMIT_TRAILER]);
         const hash = git(['rev-parse', '--short', 'HEAD']);
@@ -917,10 +1268,73 @@ async function main() {
         throw new StepError('Git commit failed: ' + detail, 'The rebuilt files are fine and stay in place. If git asks who you are, run: git config user.name "Your Name" and git config user.email "you@example.com". Or run again with --no-commit.', 2);
       }
     });
+
+    /* ---- Step 12 ---- */
+    await runStep(11, (step) => {
+      const record = (result, detail) => {
+        pushResult = { result, detail: detail || '' };
+        if (report) {
+          report.push = pushResult;
+          report.warnings = warnings.slice();
+          try { writeAtomic(PATHS.report, JSON.stringify(report, null, 2) + '\n'); } catch (e) { /* the report is optional */ }
+        }
+      };
+      if (opts.dryRun) { skip(step, 'dry run'); return; }
+      if (!opts.push) { skip(step, '--no-push was given'); record('skipped', '--no-push'); return; }
+      if (!hasGit) { skip(step, 'no git repository in this folder'); record('skipped', 'no git repository'); return; }
+      let remoteUrl = '';
+      try { remoteUrl = git(['remote', 'get-url', 'origin']); } catch (err) { /* no remote configured */ }
+      if (!remoteUrl) {
+        skip(step, 'no remote called "origin"');
+        record('skipped', 'no remote');
+        info('To publish this folder: gh repo create <name> --private --source . --remote origin --push');
+        return;
+      }
+      let branch = '';
+      try { branch = git(['rev-parse', '--abbrev-ref', 'HEAD']); } catch (err) { /* handled below */ }
+      if (!branch || branch === 'HEAD') {
+        soft(step, 'not on a branch', 'Nothing was pushed because git is not on a branch. Run: git checkout master (or your main branch) and run the script again.');
+        record('failed', 'detached HEAD');
+        return;
+      }
+      const local = git(['rev-parse', 'HEAD']);
+      info('Remote: ' + remoteUrl + '   Branch: ' + branch);
+      /* Ask the remote what it has, so "push when changed" is decided on facts. */
+      let remoteHead = null;
+      try {
+        const out = git(['ls-remote', 'origin', 'refs/heads/' + branch], { timeout: 30000 });
+        remoteHead = out ? out.split(/\s+/)[0] : '';
+      } catch (err) {
+        const detail = String((err.stderr && err.stderr.toString()) || err.message).trim().split('\n').slice(-2).join(' | ');
+        soft(step, 'could not reach the remote', 'Push skipped, the remote did not answer: ' + detail + '. Your commit is safe locally. Check the network and your GitHub login (gh auth login), then run: git push origin ' + branch);
+        record('failed', detail);
+        return;
+      }
+      if (remoteHead === local) {
+        skip(step, 'GitHub already has the latest commit');
+        record('up to date', local.slice(0, 7));
+        return;
+      }
+      info(remoteHead ? 'GitHub is at ' + remoteHead.slice(0, 7) + ', local is at ' + local.slice(0, 7) + '. Pushing...' : 'The branch does not exist on GitHub yet. Pushing...');
+      try {
+        git(['push', '-u', 'origin', branch], { timeout: 120000 });
+        info('Pushed ' + local.slice(0, 7) + ' to origin/' + branch);
+        step.note = 'pushed ' + local.slice(0, 7);
+        record('pushed', local.slice(0, 7));
+      } catch (err) {
+        const text = String((err.stderr && err.stderr.toString()) || err.message).trim();
+        const detail = text.split('\n').slice(-3).join(' | ');
+        const hint = /rejected|non-fast-forward|fetch first/.test(text)
+          ? 'GitHub has commits this folder does not have. Run: git pull --rebase origin ' + branch + ' and then run the script again.'
+          : 'Check your GitHub login (gh auth login) and that you may write to the repository, then run: git push origin ' + branch;
+        soft(step, 'push failed, commit kept locally', 'Git push failed: ' + detail + '. ' + hint);
+        record('failed', detail);
+      }
+    });
   } catch (err) {
     const failed = STEPS.find((s) => s.state === 'failed');
     /* A failed commit must not undo a good rebuild. Everything else is rolled back. */
-    const keepFiles = failed && failed.n === 10;
+    const keepFiles = failed && failed.n >= 11;
     const restored = keepFiles ? false : restore();
     console.log('\n' + RULE);
     console.log('STOPPED' + (failed ? ' at step ' + failed.n + ' (' + failed.name + ')' : ''));
@@ -931,11 +1345,11 @@ async function main() {
       console.log('How to fix: this was not expected. The details below help with troubleshooting.');
       console.log(err && err.stack ? err.stack : err);
     }
-    console.log(restored ? 'Rollback: the previous data.js, CSV and tracker-data.json were restored.' : (keepFiles ? 'Rollback: not needed. The rebuilt files were kept.' : 'Rollback: not needed. No files had been changed.'));
+    console.log(restored ? 'Rollback: the previous data.js, CSV files and tracker-data.json were restored.' : (keepFiles ? 'Rollback: not needed. The rebuilt files were kept.' : 'Rollback: not needed. No files had been changed.'));
     console.log('\nStep summary:');
     board();
     const c = counts();
-    console.log('\nCompleted: ' + c.done + '   Skipped: ' + c.skipped + '   Failed: ' + c.failed + '   Not reached: ' + c.pending);
+    console.log('\nCompleted: ' + c.done + '   With warning: ' + c.warned + '   Skipped: ' + c.skipped + '   Failed: ' + c.failed + '   Not reached: ' + c.pending);
     return err instanceof StepError ? err.code : 2;
   }
 
@@ -945,7 +1359,7 @@ async function main() {
   console.log(RULE);
   board();
   const c = counts();
-  console.log('\nCompleted: ' + c.done + '   Skipped: ' + c.skipped + '   Failed: 0   Remaining: 0');
+  console.log('\nCompleted: ' + c.done + '   With warning: ' + c.warned + '   Skipped: ' + c.skipped + '   Failed: 0   Remaining: 0');
   if (warnings.length) {
     console.log('\nWarnings (' + warnings.length + '):');
     warnings.forEach((w, i) => console.log('  ' + (i + 1) + '. ' + w));
@@ -953,8 +1367,10 @@ async function main() {
   if (!opts.dryRun) {
     console.log('\nFiles:');
     console.log('  Website data : ' + PATHS.dataJs);
-    console.log('  CSV export   : ' + PATHS.csv);
+    console.log('  Glitch CSV   : ' + PATHS.csv);
+    console.log('  Car value CSV: ' + PATHS.carsCsv);
     console.log('  Change report: ' + PATHS.report);
+    console.log('  GitHub push  : ' + (pushResult ? pushResult.result + (pushResult.detail ? ' (' + pushResult.detail + ')' : '') : 'not attempted'));
     console.log('\nNext step: publish the website again so the live page shows the new data.');
   }
   return 0;
