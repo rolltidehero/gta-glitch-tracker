@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GTA VI Glitch and Money Exploit Tracker</title>
+    <meta name="description" content="Sortable tracker of GTA VI money exploits, duplication claims and physics glitches, with platform, reproducibility, patch status and game mode for each entry." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b3283f'/%3E%3Cpath d='M7.5 10.5 12 21.5l4.5-11M22.5 10.5v11' fill='none' stroke='%23fbf8f3' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
+    <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800&display=swap" rel="stylesheet" />
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="base.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#matrix">Skip to the tracker</a>
+    <div class="page">
+      <header class="masthead">
+        <div>
+          <div class="brand">
+            <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+              <rect width="32" height="32" rx="7" fill="currentColor" />
+              <path d="M7.5 10.5 12 21.5l4.5-11M22.5 10.5v11" stroke="#fbf8f3" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <h1>GTA VI Glitch and Money Exploit Tracker</h1>
+          </div>
+          <p>Money exploits and duplication claims first, physics glitches second. Every entry is player-reported and linked to where it was shown.</p>
+        </div>
+        <p class="asof">Checked <strong id="asof-date"></strong><br />Game build <strong id="asof-build"></strong></p>
+      </header>
+
+      <main>
+        <dl class="facts" id="facts" aria-label="Tracker status"></dl>
+
+        <section class="findings" aria-label="Key findings">
+          <article class="finding">
+            <h3>One exploit has real backing</h3>
+            <p>The Apollo Aggregates warehouse respawn (M-01) is the only money exploit with steps published by several outlets, paying about $8,640 to $14,400 per run according to <a href="https://beebom.com/gta-6-unlimited-money-glitch/" target="_blank" rel="noopener noreferrer">Beebom</a> and <a href="https://www.gtaboom.com/gta-6-apollo-aggregates-warehouse-stash-5820" target="_blank" rel="noopener noreferrer">GTA BOOM</a>.</p>
+            <p>It is a Chapter 1 method, and Chapter 1 cash is wiped except $5,000 in Family Savings, per <a href="https://gta.tech4gamers.com/gta-6/guides/money-end-of-chapter-1/" target="_blank" rel="noopener noreferrer">Tech4Gamers</a>.</p>
+          </article>
+          <article class="finding">
+            <h3>No car duplication yet</h3>
+            <p>Nobody has shown a working vehicle duplication in GTA VI. The <a href="https://github.com/CodeKingGTA/GTA6-Cheats-and-Glitches" target="_blank" rel="noopener noreferrer">CodeKingGTA research repo</a> lists it as unverified, along with mission replay and fence loop rumors.</p>
+            <p>Entries M-05 to M-07 stay in the tracker so they can be upgraded when proof appears.</p>
+          </article>
+          <article class="finding">
+            <h3>The big money comes later</h3>
+            <p>Large bank vaults pay $65,000 to $205,000 in about five minutes from the end of Chapter 4 and can be repeated after the story, per <a href="https://www.powerpyx.com/gta-6-money-guide-how-to-get-money-fast/" target="_blank" rel="noopener noreferrer">PowerPyx</a> and <a href="https://timesaver.gg/tools/gta-6/money" target="_blank" rel="noopener noreferrer">Timesaver.GG</a>.</p>
+            <p>That beats every exploit on this page without any patch risk.</p>
+          </article>
+        </section>
+
+        <div class="section-head">
+          <h2 id="matrix-title">Glitch matrix</h2>
+          <p class="count" id="count" aria-live="polite"></p>
+        </div>
+
+        <form class="toolbar" id="toolbar" aria-label="Filter and sort the matrix" onsubmit="return false">
+          <div class="field field-search">
+            <label for="q">Search</label>
+            <input id="q" type="search" placeholder="Name, trigger, reporter" autocomplete="off" />
+          </div>
+          <div class="field">
+            <label for="f-category">Category</label>
+            <select id="f-category"></select>
+          </div>
+          <div class="field">
+            <label for="f-repro">Reproducibility</label>
+            <select id="f-repro"></select>
+          </div>
+          <div class="field">
+            <label for="f-status">Patch status</label>
+            <select id="f-status"></select>
+          </div>
+          <div class="field">
+            <label for="f-sort">Sort by</label>
+            <select id="f-sort"></select>
+          </div>
+          <div class="toolbar-actions">
+            <button type="button" class="btn" id="reset">Reset</button>
+            <button type="button" class="btn btn-primary" id="export">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13h11" /></svg>
+              Export CSV
+            </button>
+          </div>
+          <div class="toggle-row">
+            <label class="toggle"><input type="checkbox" id="f-money" /> Money-related only</label>
+            <span class="hint">Select a row for steps, payout, caveats and sources.</span>
+          </div>
+        </form>
+
+        <div class="table-wrap" id="matrix" tabindex="-1">
+          <table class="matrix" aria-labelledby="matrix-title">
+            <thead>
+              <tr id="head-row"></tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+          <div class="empty" id="empty" hidden>
+            <p>No entries match these filters.</p>
+            <button type="button" class="btn" id="reset-empty">Clear filters</button>
+          </div>
+        </div>
+
+        <div class="section-head">
+          <h2>Legitimate earners by chapter</h2>
+          <p class="count">For comparison with the exploits</p>
+        </div>
+        <div class="ref-wrap">
+          <table class="ref">
+            <thead>
+              <tr><th scope="col">When</th><th scope="col">Method</th><th scope="col">Reported payout</th><th scope="col">Notes</th><th scope="col">Sources</th></tr>
+            </thead>
+            <tbody id="ladder"></tbody>
+          </table>
+        </div>
+
+        <div class="section-head">
+          <h2>How to read the matrix</h2>
+        </div>
+        <div class="legend">
+          <section class="legend-card">
+            <h3>Reproducibility</h3>
+            <dl>
+              <dt><span class="badge pos">Repeatable</span></dt><dd>Steps or a trigger are published and more than one source reports it working.</dd>
+              <dt><span class="badge warn">Recurring</span></dt><dd>Captured by more than one player or clip, but there is no reliable trigger.</dd>
+              <dt><span class="badge">Isolated</span></dt><dd>One clip or one source.</dd>
+              <dt><span class="badge outline">Unverified claim</span></dt><dd>A claim with no footage or steps.</dd>
+            </dl>
+          </section>
+          <section class="legend-card">
+            <h3>Patch status</h3>
+            <dl>
+              <dt><span class="badge warn">Unpatched</span></dt><dd>Still reported and no fix has been announced.</dd>
+              <dt><span class="badge">Disputed</span></dt><dd>May be intended behavior or a gameplay setting.</dd>
+              <dt><span class="badge pos">Not a bug</span></dt><dd>A built-in feature such as a cheat code.</dd>
+              <dt><span class="badge outline">Unverified</span></dt><dd>Not confirmed to exist, so there is nothing to patch yet.</dd>
+              <dt><span class="badge neg">Not real</span></dt><dd>A joke, an advertisement or a scam.</dd>
+            </dl>
+          </section>
+        </div>
+
+        <div class="footnote">
+          <p>Reproducibility is an evidence tier, not a measured success rate. No outlet has published percentage rates for any GTA VI glitch.</p>
+          <p>GTA VI launched on November 19, 2026 for PS5 and Xbox Series X|S only, with no PC version or online mode announced, according to <a href="https://www.cleveland.com/news/2026/11/gta-6-is-finally-here-but-pc-players-are-still-waiting-for-one-big-answer.html" target="_blank" rel="noopener noreferrer">Cleveland.com</a> and the <a href="https://senseos.gg/guides/grand-theft-auto-vi/pc-platforms-and-online/" target="_blank" rel="noopener noreferrer">SenseOS platform guide</a>. The PC and Online columns stay in the matrix so they can be filled in when that changes.</p>
+          <p>"Unspecified" means the clip or article does not name the console. Builds 1.002.000 and 1.002.001 shipped before launch without patch notes, per <a href="https://stealthygaming.com/gta-6-patch-notes/" target="_blank" rel="noopener noreferrer">Stealthy Gaming</a>, and Rockstar has not published a known-issues list, per <a href="https://www.moneycontrol.com/technology/gta-6-players-report-map-falls-clipping-and-crashes-on-launch-day-article-14085026.html" target="_blank" rel="noopener noreferrer">Moneycontrol</a>.</p>
+        </div>
+      </main>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
