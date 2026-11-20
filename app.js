@@ -1,4 +1,4 @@
-/* GTA VI tracker UI: glitch matrix and car value list with search, sort, filter and CSV export. No storage APIs used. */
+/* GTA Glitch Tracker UI: glitch matrix, car value list and Wish List location cards with search, sort, filter and CSV export. No storage APIs used. */
 (function () {
   'use strict';
 
@@ -455,6 +455,12 @@
   function carRow(c) {
     var name = el('td', { class: 'cell-name car-name' }, [el('span', { text: c.name })]);
     if (c.wishList) name.appendChild(el('span', { class: 'badge pos', text: 'Wish List' }));
+    if (c.wish) {
+      /* Jumps from the table row to this car's location card further down. */
+      var go = el('button', { type: 'button', class: 'link-btn', 'data-wish': wishId(c), text: 'Location card' });
+      go.addEventListener('click', function () { showWishCard(c); });
+      name.appendChild(go);
+    }
     var buyers = el('td', { class: 'cell-buyers', 'data-label': 'Sells to' });
     if (c.buyers.length) c.buyers.forEach(function (b) { buyers.appendChild(badge(b, '')); });
     else buyers.appendChild(el('span', { class: 'muted', text: c.buyerLabel }));
@@ -559,6 +565,115 @@
     });
   }
 
+  /* ---------- Randy's Wish List location cards ---------- */
+  /* Evidence tiers, in display order. They describe how well a spot is reported
+     in guides. Nothing here was checked in the game for this tracker. */
+  var WISH_TIERS = [
+    { id: 'Guides agree', tone: 'pos', text: 'Two or more guides name the same place. It is still a report, not a guarantee.' },
+    { id: 'Reported sighting', tone: 'warn', text: 'Seen there by a player or named by one guide. It may not be there on every visit.' },
+    { id: 'Traffic search', tone: 'warn', text: 'An area to scan, not a parking bay.' },
+    { id: 'No fixed spot', tone: 'outline', text: "No guide has located it. Scan matching cars and wait for Randy's delivery prompt." },
+  ];
+  var WISH_ALL_TEXT = 'The label on each card is an evidence tier: how well the spot is reported in guides. None of these spots were checked in the game for this tracker.';
+  var wishCars = cars.filter(function (c) { return c.wish; });
+  var wishState = { tier: '' };
+
+  function wishId(c) {
+    return 'wish-' + ((c.brand ? c.brand + ' ' : '') + c.name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  function wishTier(id) {
+    for (var i = 0; i < WISH_TIERS.length; i++) if (WISH_TIERS[i].id === id) return WISH_TIERS[i];
+    return { id: id, tone: '', text: '' };
+  }
+
+  function wishCard(c) {
+    var w = c.wish;
+    var head = el('header', { class: 'wish-head' }, [
+      el('div', null, [
+        el('p', { class: 'wish-brand', text: c.brand || 'Mission car' }),
+        el('h3', { text: c.name }),
+      ]),
+      badge(w.status, wishTier(w.status).tone),
+    ]);
+    var spots = el('ul', { class: 'wish-spots' });
+    if (w.spots.length) {
+      w.spots.forEach(function (sp, i) {
+        var li = el('li', null, [
+          el('span', { class: 'wish-label', text: w.spots.length === 1 ? 'Where' : (i === 0 ? 'Main spot' : 'Alternate') }),
+          el('span', { class: 'wish-where', text: sp.where }),
+        ]);
+        if (sp.when) li.appendChild(el('span', { class: 'wish-when', text: sp.when }));
+        spots.appendChild(li);
+      });
+    } else {
+      spots.appendChild(el('li', null, [
+        el('span', { class: 'wish-label', text: 'Where' }),
+        el('span', { class: 'wish-where muted', text: 'No fixed spot reported yet' }),
+      ]));
+    }
+    var dl = el('dl');
+    function row(label, node) { dl.appendChild(el('dt', { text: label })); dl.appendChild(el('dd', null, [node])); }
+    row('You need', document.createTextNode(w.need));
+    if (w.how) row('Approach', document.createTextNode(w.how));
+    if (w.tracker) row('Tracker', document.createTextNode(w.tracker));
+    if (w.caveat) row('Watch for', richText(w.caveat));
+    row('Reported pay', document.createTextNode(c.valueText));
+    row('List', document.createTextNode(w.list));
+    var src = el('p', { class: 'wish-src' }, [document.createTextNode('Sources: ')]);
+    w.sources.forEach(function (k, i) {
+      if (i) src.appendChild(document.createTextNode(', '));
+      src.appendChild(sourceLink(k));
+    });
+    return el('article', { class: 'wish', id: wishId(c), tabindex: '-1', 'data-tier': w.status }, [head, spots, dl, src]);
+  }
+
+  function renderWish() {
+    var wrap = $('wish');
+    wrap.textContent = '';
+    var order = WISH_TIERS.map(function (t) { return t.id; });
+    var list = wishCars
+      .filter(function (c) { return !wishState.tier || c.wish.status === wishState.tier; })
+      .sort(function (a, b) { return order.indexOf(a.wish.status) - order.indexOf(b.wish.status) || a._i - b._i; });
+    list.forEach(function (c) { wrap.appendChild(wishCard(c)); });
+    var located = wishCars.filter(function (c) { return c.wish.spots.length > 0; }).length;
+    $('wish-count').textContent = wishState.tier
+      ? 'Showing ' + list.length + ' of ' + wishCars.length + ' cars'
+      : located + ' of ' + wishCars.length + ' cars have a reported spot';
+    $('wish-tier').textContent = wishState.tier ? wishState.tier + ': ' + wishTier(wishState.tier).text : WISH_ALL_TEXT;
+    Array.prototype.forEach.call($('wish-filter').querySelectorAll('button'), function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-tier') === wishState.tier));
+    });
+  }
+
+  function renderWishControls() {
+    (T.wishNotes || []).forEach(function (p) { $('wish-notes').appendChild(el('p', null, [richText(p)])); });
+    var wrap = $('wish-filter');
+    function add(tier, label, count) {
+      var b = el('button', { type: 'button', class: 'chip wish-chip', 'data-tier': tier, 'aria-pressed': 'false' }, [
+        el('span', { text: label }),
+        el('span', { class: 'wish-chip-n', text: String(count) }),
+      ]);
+      b.addEventListener('click', function () { wishState.tier = tier; renderWish(); });
+      wrap.appendChild(b);
+    }
+    add('', 'All cars', wishCars.length);
+    WISH_TIERS.forEach(function (t) {
+      var n = wishCars.filter(function (c) { return c.wish.status === t.id; }).length;
+      if (n) add(t.id, t.id, n);
+    });
+  }
+
+  /* Opens the location card of one car: clears the filter, scrolls to it, focuses it. */
+  function showWishCard(c) {
+    wishState.tier = '';
+    renderWish();
+    var card = $(wishId(c));
+    if (!card) return;
+    card.scrollIntoView({ block: 'center', behavior: 'auto' });
+    card.focus({ preventScroll: true });
+  }
+
   function renderCarControls() {
     carEls.buyer.appendChild(el('option', { value: '', text: 'All buyers' }));
     BUYER_ORDER.forEach(function (b) { carEls.buyer.appendChild(el('option', { value: b, text: b })); });
@@ -630,6 +745,8 @@
   renderCarNotes();
   renderCarControls();
   renderBuyers();
+  renderWishControls();
+  renderWish();
   bind();
   bindCars();
   renderCars();

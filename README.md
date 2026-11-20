@@ -1,14 +1,16 @@
-# GTA 6 Glitch and Money Exploit Tracker
+# GTA Glitch Tracker
 
-A single-page tracker for GTA VI money exploits, duplication claims and physics glitches, plus a car value list for the three in-game car buyers (Moses, Pay 'n' Spray and Randy).
+A single-page tracker for GTA VI money exploits, duplication claims and physics glitches, plus a car value list for the three in-game car buyers (Moses, Pay 'n' Spray and Randy) and a location card for every car on Randy's Wish List.
 
-Every entry is labelled by platform, evidence tier ("reproducibility"), patch status and game mode. Payouts and car values come from published guides and in-game scans reported by those guides. They are not measurements, and the page shows where guides disagree.
+Live page: https://rolltidehero.github.io/gta-glitch-tracker/
+
+Every entry is labelled by platform, evidence tier ("reproducibility"), patch status and game mode. Payouts, car values and car locations come from published guides and in-game scans reported by those guides. They are not measurements, nothing was checked in the game for this tracker, and the page shows where guides disagree.
 
 ## What is in here
 
 | File | Purpose |
 | --- | --- |
-| `tracker-data.json` | The only file you edit by hand. Entries, sources, money plan, car buyers and cars. |
+| `tracker-data.json` | The only file you edit by hand. Entries, sources, money plan, car buyers, cars and Wish List location cards. |
 | `update-tracker.js` | One script that validates the data, rebuilds everything, tests it, commits and pushes. |
 | `data.js` | Generated from `tracker-data.json`. Do not edit. |
 | `index.html`, `app.js`, `style.css`, `base.css` | The page itself. No build step, no dependencies. |
@@ -43,9 +45,42 @@ The script prints each of its 12 steps with what is completed, in progress and r
 
 Exit codes: `0` success, `1` invalid data or failed self-test, `2` environment problem.
 
+## Wish List location cards
+
+Every car with `"wishList": true` in `tracker-data.json` carries a `"wish"` object, which becomes its card on the page and three columns in the car CSV:
+
+```json
+"wish": {
+  "status": "Guides agree",
+  "list": "Starting 16",
+  "spots": [
+    { "where": "Forecourt of the Sweetbay Inn, East Buckley Dr, Capri", "when": "Late at night, around 3am" },
+    { "where": "Inside the Sunrise Premium Autos showroom, El Joven Blvd, northern Southside" }
+  ],
+  "need": "Clone Key",
+  "how": "If the inn forecourt is empty, try the showroom or ask Randy for a lead.",
+  "tracker": "Optional. What guides say about its tracker.",
+  "caveat": "Optional. Where guides disagree. [[sourceKey|Link text]] makes a link.",
+  "sources": ["pushsquareRandy", "radiotimes"]
+}
+```
+
+| Field | Rule |
+| --- | --- |
+| `status` | An evidence tier, not a confirmation. `Guides agree` (two or more guides name the same place, so it needs at least two sources), `Reported sighting` (one guide or one player sighting), `Traffic search` (an area to scan), `No fixed spot` (nobody has located it; `spots` must be `[]`). |
+| `list` | `Starting 16` or `Added by a mission`. Guides count the whole list as 16, 18 or 22 cars. |
+| `spots` | The first one is shown as the main spot, the rest as alternates. `when` is optional. |
+| `need`, `sources` | Required. |
+
+The script stops with a message naming the car if a Wish List car has no card or a card breaks one of these rules.
+
 ## GitHub
 
-The repository is private. After every commit the script pushes to the remote named `origin`. When nothing changed it reports that GitHub already has the latest commit and does nothing. A failed push is reported as a warning and the local commit is kept, so the next run pushes it.
+The repository is public at https://github.com/rolltidehero/gta-glitch-tracker and GitHub Pages serves the `master` branch at https://rolltidehero.github.io/gta-glitch-tracker/.
+
+After every commit the script pushes to the remote named `origin`, and GitHub Pages rebuilds the live page about a minute later. When nothing changed the script reports that GitHub already has the latest commit and does nothing. A failed push is reported as a warning and the local commit is kept, so the next run pushes it.
+
+Because the page is public, keep private notes, account names and credentials out of this folder.
 
 ## Viewing the page locally
 

@@ -305,6 +305,30 @@
       "gta6motors": {
         "name": "GTA6 Motors car selling guide",
         "url": "https://gta6motors.com/guides/sell-cars/"
+      },
+      "pushsquareRandy": {
+        "name": "Push Square Wish List locations",
+        "url": "https://www.pushsquare.com/guides/gta-6-randys-wish-list-vehicle-locations"
+      },
+      "sportskeedaRandy": {
+        "name": "Sportskeeda Randy vehicle locations",
+        "url": "https://www.sportskeeda.com/esports/all-randy-vehicle-locations-gta-6"
+      },
+      "finalboss": {
+        "name": "FinalBoss Wish List guide",
+        "url": "https://finalboss.io/gta-6-randy-wish-list"
+      },
+      "gta6supercars": {
+        "name": "GTA6 Supercars Wish List locations",
+        "url": "https://gta6supercars.com/gta-6-randys-wish-list-locations/"
+      },
+      "tech4gamersRandy": {
+        "name": "Tech4Gamers Wish List guide",
+        "url": "https://gta.tech4gamers.com/gta-6/guides/randys-wish-list/"
+      },
+      "gtafinderRandy": {
+        "name": "GTAFinder Wish List guide",
+        "url": "https://www.gtafinder.com/gta-6/guides/randys-wish-list"
       }
     },
     "entries": [
@@ -1914,7 +1938,7 @@
           ],
           [
             "Takes",
-            "Only the cars on his Wish List, Advanced trackers included. A popup appears when you scan or enter one."
+            "Only the cars on his Wish List, Advanced trackers included. A popup appears when you scan or enter one. [[tech4gamersRandy|Tech4Gamers]] says he also buys other key-cloned cars; no other guide checked says so."
           ],
           [
             "Pays",
@@ -1936,7 +1960,8 @@
           "powerpyx100",
           "playerTools",
           "cpgWishList",
-          "radiotimes"
+          "radiotimes",
+          "tech4gamersRandy"
         ]
       }
     ],
@@ -1944,6 +1969,11 @@
       "Sell values are WAiNK scan figures from [[ignVehicles|IGN's vehicle table]], which is still being filled in (82 vehicles so far, alphabetical through B). [[gtabaseCars|GTABase]] publishes the same top ten.",
       "Treat them as ceilings. [[playerTools|GTA 6 Player Tools]] and [[gta6heists|GTA6 Heists]] scanned some of the same cars at roughly a quarter to half of IGN's figure, for example a '98 Stanier at $275 to $550 against $1,045, while the registration cost matched. Every guide agrees that damage lowers the price.",
       "Scan a car before you take it: D-pad Up, then hold R1 or RB. The card shows Access, Security, Tracker, Sell Value and Cost to Register. Randy's prices are guide estimates, not scan values."
+    ],
+    "wishNotes": [
+      "Deliver to Leonida Auto World in Balsero, west Vice City (green RK icon). Pull up to the garage door, and bring the car in good condition for a better price, per [[cpgWishList|Console & PC Gaming]]. What is still wanted is listed under Map > Robberies > Randy's Wish List.",
+      "Guides count the list differently. [[cpgWishList|Console & PC Gaming]], [[tech4gamersRandy|Tech4Gamers]] and [[gtafinderRandy|GTAFinder]] list 16 starting cars, and the Mamba GT and Coquette D10 are added by later jobs. [[radiotimes|Radio Times]] and [[pushsquareRandy|Push Square]] count 22 and have located 12 and 10 of them. The [[powerpyx|PowerPyx money guide]] says 18. [[gta6supercars|GTA6 Supercars]] says the final reward car is a Truffade Thrax.",
+      "Trackers: [[radiotimes|Radio Times]] says a yellow tracker alerts police if you stop for more than a few seconds, and a red one if you stay below a set speed for too long. [[tech4gamersRandy|Tech4Gamers]] says most Wish List cars carry advanced trackers and the icon turns gray near Randy's garage. No guide checked gives a price per car or says whether the same car can be delivered twice."
     ],
     "cars": [
       {
@@ -1963,12 +1993,36 @@
         "sortValue": 31250,
         "registerCost": null,
         "condition": "",
-        "note": "Delivered during the story mission, from the Hathaway Apartments car park in Ocean Beach. Console & PC Gaming reports $21,250 plus a $10,000 clean-delivery bonus and gives no citation for it.",
+        "note": "Delivered during the story mission, from the Hathaway Apartments car park in Ocean Beach. Console & PC Gaming and Tech4Gamers report $21,250 plus a $10,000 clean-delivery bonus for this job.",
         "sources": [
           "powerpyxTrophy",
           "cpgWishList",
-          "radiotimes"
-        ]
+          "radiotimes",
+          "tech4gamersRandy"
+        ],
+        "wish": {
+          "status": "Guides agree",
+          "list": "Starting 16",
+          "spots": [
+            {
+              "where": "Hathaway Apartments car park, Ocean Beach, on the east side",
+              "when": "Story delivery in Chapter 3"
+            }
+          ],
+          "whereText": "Hathaway Apartments car park, Ocean Beach, on the east side (Story delivery in Chapter 3)",
+          "need": "Key Cloner, installed during this job",
+          "how": "Take Randy's call after Crosstown Traffic. Sportskeeda says to hop the eastern wall into the car park. Deliver the car, then follow Randy inside to see his board.",
+          "tracker": "",
+          "caveat": "Guides differ on the level: ground level at [[cpgWishList|Console & PC Gaming]] and [[finalboss|FinalBoss]], first floor at [[radiotimes|Radio Times]] and [[sportskeedaRandy|Sportskeeda]]. The $21,250 plus $10,000 clean-delivery figure comes from [[cpgWishList|Console & PC Gaming]] and [[tech4gamersRandy|Tech4Gamers]].",
+          "sources": [
+            "radiotimes",
+            "cpgWishList",
+            "finalboss",
+            "sportskeedaRandy",
+            "tech4gamersRandy",
+            "gtafinderRandy"
+          ]
+        }
       },
       {
         "name": "Vitello",
@@ -1992,7 +2046,30 @@
           "powerpyxTrophy",
           "cpgWishList",
           "radiotimes"
-        ]
+        ],
+        "wish": {
+          "status": "Guides agree",
+          "list": "Starting 16",
+          "spots": [
+            {
+              "where": "Villa on Flamingo Pkwy, Waning Sands, east of Belville. Garage closest to the house, on the right as you face it.",
+              "when": ""
+            }
+          ],
+          "whereText": "Villa on Flamingo Pkwy, Waning Sands, east of Belville. Garage closest to the house, on the right as you face it.",
+          "need": "Clone Key",
+          "how": "Push Square and Radio Times suggest planting explosives on the gate before you take the car, then setting them off for the way out.",
+          "tracker": "",
+          "caveat": "[[sportskeedaRandy|Sportskeeda]] words it differently: a mansion with a white overhead gate and the car in the southern garage, in an area it calls Vinewood Beach.",
+          "sources": [
+            "pushsquareRandy",
+            "radiotimes",
+            "cpgWishList",
+            "finalboss",
+            "tech4gamersRandy",
+            "sportskeedaRandy"
+          ]
+        }
       },
       {
         "name": "Infernus",
@@ -2016,7 +2093,29 @@
           "powerpyxTrophy",
           "cpgWishList",
           "radiotimes"
-        ]
+        ],
+        "wish": {
+          "status": "Guides agree",
+          "list": "Starting 16",
+          "spots": [
+            {
+              "where": "Crosstown Police Station car park, NW 9th St, level 7",
+              "when": ""
+            }
+          ],
+          "whereText": "Crosstown Police Station car park, NW 9th St, level 7",
+          "need": "Clone Key",
+          "how": "Wait for the gate to open for a police car leaving, slip in and take the ramps up. Leave by the stunt jump on the top floor.",
+          "tracker": "Has a tracker. Keep your speed up, per Push Square.",
+          "caveat": "[[sportskeedaRandy|Sportskeeda]] calls it the '96 Infernus and says a small elevator outside the garage also reaches level 7.",
+          "sources": [
+            "pushsquareRandy",
+            "radiotimes",
+            "cpgWishList",
+            "finalboss",
+            "sportskeedaRandy"
+          ]
+        }
       },
       {
         "name": "Windsor Drop",
@@ -2039,7 +2138,21 @@
         "sources": [
           "powerpyxTrophy",
           "cpgWishList"
-        ]
+        ],
+        "wish": {
+          "status": "No fixed spot",
+          "list": "Starting 16",
+          "spots": [],
+          "whereText": "No fixed spot reported",
+          "need": "Scan, then wait for Randy's delivery prompt",
+          "how": "Look for the convertible and scan it to tell it apart from the regular Windsor.",
+          "tracker": "",
+          "caveat": "",
+          "sources": [
+            "cpgWishList",
+            "gtafinderRandy"
+          ]
+        }
       },
       {
         "name": "Toros",
@@ -2063,7 +2176,28 @@
           "powerpyxTrophy",
           "cpgWishList",
           "radiotimes"
-        ]
+        ],
+        "wish": {
+          "status": "Guides agree",
+          "list": "Starting 16",
+          "spots": [
+            {
+              "where": "On the street outside the Pegassi Residences entrance, Bayside Dr, Tequesta Retreat",
+              "when": "Early evening, around 6:30pm"
+            }
+          ],
+          "whereText": "On the street outside the Pegassi Residences entrance, Bayside Dr, Tequesta Retreat (Early evening, around 6:30pm)",
+          "need": "Clone Key",
+          "how": "Clone the key and make a quick getaway, per Push Square.",
+          "tracker": "",
+          "caveat": "[[cpgWishList|Console & PC Gaming]] says the entrance is not a guaranteed spawn.",
+          "sources": [
+            "pushsquareRandy",
+            "radiotimes",
+            "cpgWishList",
+            "gta6supercars"
+          ]
+        }
       },
       {
         "name": "Tempesta",
@@ -2087,7 +2221,34 @@
           "powerpyxTrophy",
           "cpgWishList",
           "radiotimes"
-        ]
+        ],
+        "wish": {
+          "status": "Guides agree",
+          "list": "Starting 16",
+          "spots": [
+            {
+              "where": "NE 3rd St, Vice City, on a tow truck during the repossession random event",
+              "when": "Daytime, around 1pm"
+            },
+            {
+              "where": "Driveway of a small wooden cabin on the west side of Lake Tallaloko",
+              "when": ""
+            }
+          ],
+          "whereText": "NE 3rd St, Vice City, on a tow truck during the repossession random event (Daytime, around 1pm) | Driveway of a small wooden cabin on the west side of Lake Tallaloko",
+          "need": "Nothing at the event: release the car from the tow truck",
+          "how": "At the event, threaten the owner, then release the car from the tow truck before you drive off. If the event is not running, check the cabin.",
+          "tracker": "",
+          "caveat": "GTAFinder says Randy wants the standard Tempesta, so scan it to rule out a variant.",
+          "sources": [
+            "pushsquareRandy",
+            "radiotimes",
+            "cpgWishList",
+            "finalboss",
+            "sportskeedaRandy",
+            "gtafinderRandy"
+          ]
+        }
       },
       {
         "name": "Paragon",
@@ -2111,7 +2272,32 @@
           "powerpyxTrophy",
           "cpgWishList",
           "radiotimes"
-        ]
+        ],
+        "wish": {
+          "status": "Guides agree",
+          "list": "Starting 16",
+          "spots": [
+            {
+              "where": "Outside The Banana Hole Main Bar, Shore Dr, Ocean Beach",
+              "when": "Evening, around 6pm"
+            },
+            {
+              "where": "Garage of a mansion with no walls in northern Belville",
+              "when": ""
+            }
+          ],
+          "whereText": "Outside The Banana Hole Main Bar, Shore Dr, Ocean Beach (Evening, around 6pm) | Garage of a mansion with no walls in northern Belville",
+          "need": "Clone Key",
+          "how": "At the mansion the garage door is shut, so climb in through the open window.",
+          "tracker": "Has a tracker. Drive fast to avoid police interest, per Push Square.",
+          "caveat": "",
+          "sources": [
+            "pushsquareRandy",
+            "radiotimes",
+            "cpgWishList",
+            "sportskeedaRandy"
+          ]
+        }
       },
       {
         "name": "Jugular",
@@ -2134,7 +2320,21 @@
         "sources": [
           "powerpyxTrophy",
           "cpgWishList"
-        ]
+        ],
+        "wish": {
+          "status": "No fixed spot",
+          "list": "Starting 16",
+          "spots": [],
+          "whereText": "No fixed spot reported",
+          "need": "Scan, then wait for Randy's delivery prompt",
+          "how": "Scan four-door sedans for the Ocelot Jugular.",
+          "tracker": "",
+          "caveat": "[[tech4gamersRandy|Tech4Gamers]] spells it Jagular. [[cpgWishList|Console & PC Gaming]] knows of a Bloodless Jugular variant in a Belville garage and has not verified that it clears this entry.",
+          "sources": [
+            "cpgWishList",
+            "tech4gamersRandy"
+          ]
+        }
       },
       {
         "name": "Jubilee",
@@ -2157,7 +2357,20 @@
         "sources": [
           "powerpyxTrophy",
           "cpgWishList"
-        ]
+        ],
+        "wish": {
+          "status": "No fixed spot",
+          "list": "Starting 16",
+          "spots": [],
+          "whereText": "No fixed spot reported",
+          "need": "Scan, then wait for Randy's delivery prompt",
+          "how": "Check Randy's current marker first. Without one, scan Buckingham SUVs.",
+          "tracker": "",
+          "caveat": "",
+          "sources": [
+            "cpgWishList"
+          ]
+        }
       },
       {
         "name": "Itali RSX",
@@ -2180,7 +2393,25 @@
         "sources": [
           "powerpyxTrophy",
           "cpgWishList"
-        ]
+        ],
+        "wish": {
+          "status": "Traffic search",
+          "list": "Starting 16",
+          "spots": [
+            {
+              "where": "Hotel forecourts in Vice Beach",
+              "when": ""
+            }
+          ],
+          "whereText": "Hotel forecourts in Vice Beach",
+          "need": "Scan for Itali RSX, not just the Grotti badge",
+          "how": "Work the hotel forecourts while you look for other sports cars.",
+          "tracker": "",
+          "caveat": "[[cpgWishList|Console & PC Gaming]] calls this a traffic search, not a confirmed parking bay.",
+          "sources": [
+            "cpgWishList"
+          ]
+        }
       },
       {
         "name": "Growler",
@@ -2205,7 +2436,27 @@
           "cpgWishList",
           "radiotimes",
           "gta6motors"
-        ]
+        ],
+        "wish": {
+          "status": "Guides agree",
+          "list": "Starting 16",
+          "spots": [
+            {
+              "where": "Multi-storey car park on Fig St, Ocean Beach. Check the bays inside, not the kerb.",
+              "when": "Late afternoon"
+            }
+          ],
+          "whereText": "Multi-storey car park on Fig St, Ocean Beach. Check the bays inside, not the kerb. (Late afternoon)",
+          "need": "Clone Key",
+          "how": "Turn into the garage and check the parking bays.",
+          "tracker": "",
+          "caveat": "[[cpgWishList|Console & PC Gaming]] says it has been seen here, which is short of a guarantee.",
+          "sources": [
+            "radiotimes",
+            "cpgWishList",
+            "gta6supercars"
+          ]
+        }
       },
       {
         "name": "Gauntlet Hellfire",
@@ -2229,7 +2480,30 @@
           "powerpyxTrophy",
           "cpgWishList",
           "radiotimes"
-        ]
+        ],
+        "wish": {
+          "status": "Guides agree",
+          "list": "Starting 16",
+          "spots": [
+            {
+              "where": "M7 junkyard off Galerina St, Hamlet, east of Boone Speedway. The car is at the back.",
+              "when": ""
+            }
+          ],
+          "whereText": "M7 junkyard off Galerina St, Hamlet, east of Boone Speedway. The car is at the back.",
+          "need": "Clone Key",
+          "how": "Go round the right-hand side and open the entrance gates first, so you have a way out once you are in the car.",
+          "tracker": "",
+          "caveat": "[[sportskeedaRandy|Sportskeeda]] names the yard All Grade Scrapyard and puts the car near a red shipping container. [[tech4gamersRandy|Tech4Gamers]] says it is also often parked outside hotels in Vice Beach and Ocean Beach.",
+          "sources": [
+            "pushsquareRandy",
+            "radiotimes",
+            "cpgWishList",
+            "finalboss",
+            "sportskeedaRandy",
+            "tech4gamersRandy"
+          ]
+        }
       },
       {
         "name": "Furia",
@@ -2253,7 +2527,29 @@
           "powerpyxTrophy",
           "cpgWishList",
           "radiotimes"
-        ]
+        ],
+        "wish": {
+          "status": "Guides agree",
+          "list": "Starting 16",
+          "spots": [
+            {
+              "where": "Waterfront mansion on Palladia Ln, Peacock Estates: a yellow villa at the southernmost corner. The car is in the detached garage.",
+              "when": ""
+            }
+          ],
+          "whereText": "Waterfront mansion on Palladia Ln, Peacock Estates: a yellow villa at the southernmost corner. The car is in the detached garage.",
+          "need": "Clone Key",
+          "how": "Take the path left of the gate, hop the hedge and go in through the garage door. Open the shutters to drive out.",
+          "tracker": "",
+          "caveat": "[[tech4gamersRandy|Tech4Gamers]] says it is also often seen around Vice Beach and Ocean Beach.",
+          "sources": [
+            "pushsquareRandy",
+            "radiotimes",
+            "cpgWishList",
+            "sportskeedaRandy",
+            "tech4gamersRandy"
+          ]
+        }
       },
       {
         "name": "Dubsta",
@@ -2276,7 +2572,20 @@
         "sources": [
           "powerpyxTrophy",
           "cpgWishList"
-        ]
+        ],
+        "wish": {
+          "status": "No fixed spot",
+          "list": "Starting 16",
+          "spots": [],
+          "whereText": "No fixed spot reported",
+          "need": "Scan, then wait for Randy's delivery prompt",
+          "how": "A boxy Benefactor SUV. Scan it before you change route; the game says so if Randy wants it.",
+          "tracker": "",
+          "caveat": "",
+          "sources": [
+            "cpgWishList"
+          ]
+        }
       },
       {
         "name": "Banshee",
@@ -2300,7 +2609,33 @@
           "powerpyxTrophy",
           "cpgWishList",
           "radiotimes"
-        ]
+        ],
+        "wish": {
+          "status": "Guides agree",
+          "list": "Starting 16",
+          "spots": [
+            {
+              "where": "Forecourt of the Sweetbay Inn, East Buckley Dr, Capri",
+              "when": "Late at night, around 3am"
+            },
+            {
+              "where": "Inside the Sunrise Premium Autos showroom, El Joven Blvd, northern Southside",
+              "when": ""
+            }
+          ],
+          "whereText": "Forecourt of the Sweetbay Inn, East Buckley Dr, Capri (Late at night, around 3am) | Inside the Sunrise Premium Autos showroom, El Joven Blvd, northern Southside",
+          "need": "Clone Key",
+          "how": "If the inn forecourt is empty, try the showroom or ask Randy for a lead.",
+          "tracker": "",
+          "caveat": "",
+          "sources": [
+            "pushsquareRandy",
+            "radiotimes",
+            "cpgWishList",
+            "finalboss",
+            "sportskeedaRandy"
+          ]
+        }
       },
       {
         "name": "Baller ST-D",
@@ -2323,7 +2658,27 @@
         "sources": [
           "powerpyxTrophy",
           "cpgWishList"
-        ]
+        ],
+        "wish": {
+          "status": "Reported sighting",
+          "list": "Starting 16",
+          "spots": [
+            {
+              "where": "Southside, Vice City: the street east of the shopping block, north of the canal",
+              "when": ""
+            }
+          ],
+          "whereText": "Southside, Vice City: the street east of the shopping block, north of the canal",
+          "need": "Scan for the full name, Baller ST-D",
+          "how": "Scan the SUV and wait for Randy's delivery prompt before you commit.",
+          "tracker": "",
+          "caveat": "One player sighting relayed by [[cpgWishList|Console & PC Gaming]], which says it may not be there on every visit. [[tech4gamersRandy|Tech4Gamers]] says it also turns up at gas stations.",
+          "sources": [
+            "cpgWishList",
+            "tech4gamersRandy",
+            "gtafinderRandy"
+          ]
+        }
       },
       {
         "name": "Mamba GT",
@@ -2342,11 +2697,33 @@
         "sortValue": null,
         "registerCost": null,
         "condition": "",
-        "note": "Randy mission car (Dale Mamba), not one of the 16 in the PowerPyx list. Behind a mansion on the south side of Leaf Links, Vice Beach. The Key Cloner will not start it; the key is in a bowl inside the house. No payout published.",
+        "note": "Randy mission car (¡Dale Mamba!), not one of the 16 starting cars. Behind the right-hand building of a mansion in Leaf Links, Vice Beach. The key is in a bowl inside the main house; open its doors with the Snap Gun. No payout published.",
         "sources": [
           "cpgWishList",
-          "radiotimes"
-        ]
+          "radiotimes",
+          "pushsquareRandy"
+        ],
+        "wish": {
+          "status": "Guides agree",
+          "list": "Added by a mission",
+          "spots": [
+            {
+              "where": "Mansion in Leaf Links, Vice Beach. The car is behind the building on the right.",
+              "when": "After the mission ¡Dale Mamba! adds it"
+            }
+          ],
+          "whereText": "Mansion in Leaf Links, Vice Beach. The car is behind the building on the right. (After the mission ¡Dale Mamba! adds it)",
+          "need": "Snap Gun",
+          "how": "The key is in a bowl on the table behind the sofa in the main building, past the pool. Open its doors with the Snap Gun, take the key and go back to the car. FinalBoss says the Snap Gun comes from the first of Yasmani's jewelry jobs.",
+          "tracker": "Has a tracker. If it goes off, keep outpacing the police, per Push Square.",
+          "caveat": "",
+          "sources": [
+            "pushsquareRandy",
+            "radiotimes",
+            "finalboss",
+            "cpgWishList"
+          ]
+        }
       },
       {
         "name": "Coquette D10",
@@ -2365,11 +2742,32 @@
         "sortValue": null,
         "registerCost": null,
         "condition": "",
-        "note": "Randy mission car, not one of the 16 in the PowerPyx list. Yellow car beside a red shipping container at the western docks. No payout published.",
+        "note": "Randy mission car, not one of the 16 starting cars. Yellow car beside a red shipping container at the western docks of Wasman Island. No payout published.",
         "sources": [
           "cpgWishList",
           "radiotimes"
-        ]
+        ],
+        "wish": {
+          "status": "Guides agree",
+          "list": "Added by a mission",
+          "spots": [
+            {
+              "where": "Western docks of Wasman Island: a storage yard with a blue fence. A yellow car beside a red shipping container.",
+              "when": ""
+            }
+          ],
+          "whereText": "Western docks of Wasman Island: a storage yard with a blue fence. A yellow car beside a red shipping container.",
+          "need": "Clone Key",
+          "how": "Jump the fence on the left side and sneak in, per Sportskeeda.",
+          "tracker": "",
+          "caveat": "[[sportskeedaRandy|Sportskeeda]] spells the island Waxman. [[cpgWishList|Console & PC Gaming]] ties the car to a job called Steal the Coquette D10.",
+          "sources": [
+            "radiotimes",
+            "sportskeedaRandy",
+            "gta6supercars",
+            "cpgWishList"
+          ]
+        }
       },
       {
         "name": "'07 Buffalo",
@@ -2389,7 +2787,8 @@
         "note": "IGN has not filled in the brand or tracker yet, so the buyer is unknown.",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'19 Buffalo",
@@ -2411,7 +2810,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'20 Impaler",
@@ -2434,7 +2834,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'32 Hustler",
@@ -2457,7 +2858,8 @@
         "sources": [
           "ignVehicles",
           "gtabaseCars"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'50 Hermes",
@@ -2480,7 +2882,8 @@
         "sources": [
           "ignVehicles",
           "gtabaseCars"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'55 Bobcat 500",
@@ -2502,7 +2905,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'56 Slamvan",
@@ -2524,7 +2928,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'59 Devanity",
@@ -2547,7 +2952,8 @@
         "sources": [
           "ignVehicles",
           "gtabaseCars"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'61 Sungrazer",
@@ -2569,7 +2975,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'64 Coquette",
@@ -2592,7 +2999,8 @@
         "sources": [
           "ignVehicles",
           "gtabaseCars"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'65 Buccaneer",
@@ -2615,7 +3023,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'65 Chino",
@@ -2637,7 +3046,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'65 Dominator",
@@ -2660,7 +3070,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'67 Transgressor",
@@ -2684,7 +3095,8 @@
         "sources": [
           "ignVehicles",
           "gtabaseCars"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'67 Yosemite",
@@ -2707,7 +3119,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'68 Stallion",
@@ -2729,7 +3142,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'69 Gauntlet Custom",
@@ -2752,7 +3166,8 @@
         "sources": [
           "ignVehicles",
           "gtabaseCars"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'70 Ganado",
@@ -2775,7 +3190,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'70s Reclaimer",
@@ -2798,7 +3214,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'71 Parkland",
@@ -2821,7 +3238,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'72 Picador",
@@ -2844,7 +3262,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'72 Tulip",
@@ -2866,7 +3285,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'73 Injection",
@@ -2889,7 +3309,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'74 Vamos",
@@ -2912,7 +3333,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'74 Youga",
@@ -2935,7 +3357,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'77 Bandito",
@@ -2958,7 +3381,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'77 Manana",
@@ -2981,7 +3405,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'77 Phoenix",
@@ -3003,7 +3428,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'78 Tulip M-100",
@@ -3026,7 +3452,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'79 Youga XL",
@@ -3049,7 +3476,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'80 Impaler",
@@ -3072,7 +3500,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'81 Walton",
@@ -3095,7 +3524,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'82 Crawler",
@@ -3119,7 +3549,8 @@
         "sources": [
           "ignVehicles",
           "pushsquareMoses"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'82 Ruiner",
@@ -3142,7 +3573,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'84 Bobcat XL",
@@ -3165,7 +3597,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'84 Rebel",
@@ -3189,7 +3622,8 @@
         "sources": [
           "ignVehicles",
           "playerTools"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'85 Blista",
@@ -3212,7 +3646,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'85 Emperor",
@@ -3235,7 +3670,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'85 Futo",
@@ -3258,7 +3694,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'85 Sentinel",
@@ -3281,7 +3718,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'85 Woodland",
@@ -3304,7 +3742,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'86 Rancher",
@@ -3328,7 +3767,8 @@
         "sources": [
           "ignVehicles",
           "gta6heists"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'88 Comet",
@@ -3351,7 +3791,8 @@
           "gtabaseCars",
           "playerTools",
           "cpgWishList"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'90 Elegy",
@@ -3373,7 +3814,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'90 Lasso",
@@ -3395,7 +3837,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'92 Grouse",
@@ -3419,7 +3862,8 @@
         "sources": [
           "ignVehicles",
           "gta6heists"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'92 Patriot",
@@ -3440,7 +3884,8 @@
         "sources": [
           "ignVehicles",
           "gtabaseCars"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'93 Arcturus",
@@ -3464,7 +3909,8 @@
         "sources": [
           "ignVehicles",
           "gta6heists"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'95 Bison 900",
@@ -3487,7 +3933,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'95 Bison 900 (Lifted)",
@@ -3510,7 +3957,8 @@
         "note": "No registration cost listed.",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'95 Cheetah",
@@ -3533,7 +3981,8 @@
           "gtabaseCars",
           "playerTools",
           "cpgWishList"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'95 Hellion",
@@ -3556,7 +4005,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'95 Impaler SZ",
@@ -3580,7 +4030,8 @@
         "sources": [
           "ignVehicles",
           "gta6heists"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'96 Infernus",
@@ -3603,7 +4054,8 @@
           "gtabaseCars",
           "playerTools",
           "cpgWishList"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'97 Penumbra FF",
@@ -3626,7 +4078,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'98 Burrito",
@@ -3649,7 +4102,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'98 Feroci",
@@ -3672,7 +4126,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "'98 Stanier",
@@ -3697,7 +4152,8 @@
           "ignVehicles",
           "playerTools",
           "gta6heists"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "8F Drafter",
@@ -3719,7 +4175,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Akane",
@@ -3742,7 +4199,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Aleutian",
@@ -3765,7 +4223,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Allander",
@@ -3788,7 +4247,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Animus",
@@ -3811,7 +4271,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Apoc",
@@ -3834,7 +4295,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Asterope GZ",
@@ -3857,7 +4319,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Astron",
@@ -3879,7 +4342,8 @@
         "note": "",
         "sources": [
           "ignVehicles"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Caracara 4x4",
@@ -3903,7 +4367,8 @@
         "sources": [
           "gta6heists",
           "playerTools"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Speedo",
@@ -3925,7 +4390,8 @@
         "note": "Price Moses paid in a GTA6 Heists run.",
         "sources": [
           "gta6heists"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Schafter S",
@@ -3947,7 +4413,8 @@
         "note": "Price a Pay 'n' Spray paid in a GTA6 Heists run.",
         "sources": [
           "gta6heists"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Bison",
@@ -3969,7 +4436,8 @@
         "note": "Scan value on Moses's card. He paid $1,415 for one in a GTA6 Heists run.",
         "sources": [
           "gta6heists"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Riata",
@@ -3989,7 +4457,8 @@
         "note": "Scanned in Moses's yard with \"tracker installed\", type not stated, so the buyer is unclear.",
         "sources": [
           "gta6heists"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Sanchez",
@@ -4011,7 +4480,8 @@
         "note": "Scan value on Moses's card.",
         "sources": [
           "gta6heists"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Dorado",
@@ -4034,7 +4504,8 @@
         "note": "",
         "sources": [
           "playerTools"
-        ]
+        ],
+        "wish": null
       },
       {
         "name": "Montagne XL",
@@ -4056,7 +4527,8 @@
         "note": "Scanned in Moses's yard.",
         "sources": [
           "gta6heists"
-        ]
+        ],
+        "wish": null
       }
     ],
     "findings": [
@@ -4125,6 +4597,9 @@
     ['Cost to register (USD)', function (c) { return c.registerCost == null ? '' : c.registerCost; }],
     ['Condition when scanned', function (c) { return c.condition; }],
     ['On Randy Wish List', function (c) { return c.wishList ? 'Yes' : 'No'; }],
+    ['Wish List evidence', function (c) { return c.wish ? c.wish.status : ''; }],
+    ['Wish List location', function (c) { return c.wish ? c.wish.whereText : ''; }],
+    ['Wish List needs', function (c) { return c.wish ? c.wish.need : ''; }],
     ['Notes', function (c) { return c.note; }],
     ['Source URLs', function (c) { return c.sources.map(function (k) { return DATA.sources[k].url; }).join(' | '); }],
   ];

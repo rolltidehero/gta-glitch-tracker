@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>GTA VI Glitch and Money Exploit Tracker</title>
-    <meta name="description" content="Sortable tracker of GTA VI money exploits, duplication claims and physics glitches, with platform, reproducibility, patch status and game mode for each entry, plus a car value list for Moses, Pay 'n' Spray and Randy." />
+    <title>GTA Glitch Tracker</title>
+    <meta name="description" content="Sortable tracker of GTA VI money exploits, duplication claims and physics glitches, with platform, reproducibility, patch status and game mode for each entry, plus a car value list for Moses, Pay 'n' Spray and Randy and a location card for every car on Randy's Wish List." />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b3283f'/%3E%3Cpath d='M7.5 10.5 12 21.5l4.5-11M22.5 10.5v11' fill='none' stroke='%23fbf8f3' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
     <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
@@ -23,9 +23,9 @@
               <rect width="32" height="32" rx="7" fill="currentColor" />
               <path d="M7.5 10.5 12 21.5l4.5-11M22.5 10.5v11" stroke="#fbf8f3" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            <h1>GTA VI Glitch and Money Exploit Tracker</h1>
+            <h1>GTA Glitch Tracker</h1>
           </div>
-          <p>Money exploits and duplication claims first, physics glitches second. Every entry is player-reported and linked to where it was shown.</p>
+          <p>GTA VI money exploits and duplication claims first, physics glitches second. Every entry is player-reported and linked to where it was shown.</p>
         </div>
         <p class="asof">Checked <strong id="asof-date"></strong><br />Game build <strong id="asof-build"></strong></p>
       </header>
@@ -34,6 +34,7 @@
         <a href="#matrix-title" data-jump="matrix-title">Glitch matrix</a>
         <a href="#plan-title" data-jump="plan-title">Money plan by chapter</a>
         <a href="#cars-title" data-jump="cars-title">Car value list</a>
+        <a href="#wish-title" data-jump="wish-title">Wish List locations</a>
         <a href="#earners-title" data-jump="earners-title">Legitimate earners</a>
         <a href="#legend-title" data-jump="legend-title">How to read the matrix</a>
       </nav>
@@ -158,6 +159,15 @@
             <button type="button" class="btn" id="car-reset-empty">Clear filters</button>
           </div>
         </div>
+
+        <div class="section-head">
+          <h2 id="wish-title" tabindex="-1">Randy's Wish List locations</h2>
+          <p class="count" id="wish-count" aria-live="polite"></p>
+        </div>
+        <div class="car-notes" id="wish-notes"></div>
+        <div class="wish-filter" id="wish-filter" role="group" aria-label="Filter location cards by evidence"></div>
+        <p class="wish-tier" id="wish-tier" aria-live="polite"></p>
+        <div class="wish-grid" id="wish"></div>
 
         <div class="section-head">
           <h2 id="earners-title" tabindex="-1">Legitimate earners by chapter</h2>

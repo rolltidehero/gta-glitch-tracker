@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =============================================================================
-   GTA VI Glitch and Money Exploit Tracker: single update script
+   GTA Glitch Tracker: single update script
    =============================================================================
 
    WHAT THIS DOES
@@ -104,13 +104,22 @@ const ALLOWED = {
   sp: ['Yes', 'No'],
   online: ['Yes', 'No', 'No online mode'],
   tracker: ['None', 'Standard', 'Advanced', 'Military', 'Disputed', 'Not published'],
+  /* Evidence tier for a Wish List location card. It says how well the spot is
+     reported, not that anyone here confirmed it in the game. */
+  wishStatus: ['Guides agree', 'Reported sighting', 'Traffic search', 'No fixed spot'],
+  /* Which count of Randy's list includes the car. */
+  wishList: ['Starting 16', 'Added by a mission'],
 };
 
 /* The three places that buy stolen cars. "carBuyers" in the data file must use these ids. */
 const BUYERS = ['Moses', "Pay 'n' Spray", 'Randy'];
 
 /* Fields a car in the "cars" list may have. Only name, tracker and sources are required. */
-const CAR_FIELDS = ['name', 'ignName', 'brand', 'type', 'era', 'tracker', 'sellValue', 'valueText', 'estValue', 'registerCost', 'condition', 'wishList', 'buyers', 'note', 'sources'];
+const CAR_FIELDS = ['name', 'ignName', 'brand', 'type', 'era', 'tracker', 'sellValue', 'valueText', 'estValue', 'registerCost', 'condition', 'wishList', 'wish', 'buyers', 'note', 'sources'];
+
+/* Fields of the "wish" location card on a Wish List car. status, list, spots,
+   need and sources are required; how, tracker and caveat are optional. */
+const WISH_FIELDS = ['status', 'list', 'spots', 'need', 'how', 'tracker', 'caveat', 'sources'];
 
 /* Where --refresh-cars reads car values from (IGN's public vehicle table). */
 const IGN = {
@@ -182,7 +191,7 @@ function printHelp() {
   const src = fs.readFileSync(__filename, 'utf8');
   const start = src.indexOf('HOW TO RUN');
   const end = src.indexOf('STEPS (shown live');
-  console.log('GTA VI tracker update script\n\n   ' + src.slice(start, end).trimEnd() + '\n');
+  console.log('GTA Glitch Tracker update script\n\n   ' + src.slice(start, end).trimEnd() + '\n');
 }
 
 /* ---------------------------------------------------------------------------
@@ -409,7 +418,7 @@ async function fetchIgnVehicles() {
   return rows;
 }
 
-/* Copies IGN's values into data.cars. Hand-written fields (note, wishList, buyers,
+/* Copies IGN's values into data.cars. Hand-written fields (note, wishList, wish, buyers,
    display name, extra sources) are never overwritten. Returns what changed. */
 function mergeIgnCars(data, rows) {
   if (!Array.isArray(data.cars)) data.cars = [];
@@ -603,6 +612,12 @@ function validate(data) {
     else data.carNotes.forEach((p, j) => checkRichText('carNotes[' + j + ']', p));
   }
 
+  /* Wish List notes (the paragraphs above the location cards), optional */
+  if (data.wishNotes !== undefined) {
+    if (!Array.isArray(data.wishNotes)) err('wishNotes', 'must be a list');
+    else data.wishNotes.forEach((p, j) => checkRichText('wishNotes[' + j + ']', p));
+  }
+
   /* cars (the car value list), optional */
   if (data.cars !== undefined) {
     if (!Array.isArray(data.cars)) err('cars', 'must be a list');
@@ -623,6 +638,38 @@ function validate(data) {
         ['sellValue', 'estValue', 'registerCost'].forEach((k) => amount(where, c, k));
         if ((c.sellValue === undefined || c.sellValue === null) && !filled(c.valueText)) err(where, 'needs a "sellValue" number or a "valueText" such as "Not published"');
         if (c.wishList !== undefined && typeof c.wishList !== 'boolean') err(where, '"wishList" must be true or false');
+        /* Location card: every Wish List car has one, and no other car may. */
+        if (c.wishList === true && c.wish === undefined) err(where, 'is on the Wish List, so it needs a "wish" location card. For a car nobody has located use {"status": "No fixed spot", "list": "Starting 16", "spots": [], "need": "...", "sources": [...]}');
+        if (c.wish !== undefined) {
+          const w = c.wish;
+          const ww = where + '.wish';
+          if (c.wishList !== true) err(ww, 'only a car with "wishList": true may have a location card');
+          if (!w || typeof w !== 'object' || Array.isArray(w)) err(ww, 'must be an object');
+          else {
+            if (ALLOWED.wishStatus.indexOf(w.status) === -1) err(ww, '"status" is "' + w.status + '" but must be one of: ' + ALLOWED.wishStatus.join(', '));
+            if (ALLOWED.wishList.indexOf(w.list) === -1) err(ww, '"list" is "' + w.list + '" but must be one of: ' + ALLOWED.wishList.join(', '));
+            if (!Array.isArray(w.spots)) err(ww, 'needs "spots", a list of {"where": "...", "when": "..."} (use [] when no spot is known)');
+            else {
+              w.spots.forEach((sp, j) => {
+                const sw = ww + '.spots[' + j + ']';
+                if (!sp || typeof sp !== 'object' || !filled(sp.where)) { err(sw, 'needs a "where" text'); return; }
+                if (sp.when !== undefined && !isString(sp.when)) err(sw, '"when" must be text');
+                Object.keys(sp).forEach((k) => { if (k !== 'where' && k !== 'when') err(sw, 'unknown field "' + k + '"'); });
+              });
+              if (w.status === 'No fixed spot' && w.spots.length > 0) err(ww, 'has spots, so "status" cannot be "No fixed spot"');
+              if (w.status !== 'No fixed spot' && w.spots.length === 0) err(ww, 'has no spots, so "status" must be "No fixed spot"');
+            }
+            if (!filled(w.need)) err(ww, 'needs a "need" text (the tool or action, for example "Clone Key")');
+            ['how', 'tracker'].forEach((k) => { if (w[k] !== undefined && !isString(w[k])) err(ww, '"' + k + '" must be text'); });
+            if (w.caveat !== undefined) checkRichText(ww + '.caveat', w.caveat);
+            if (!Array.isArray(w.sources) || w.sources.length === 0) err(ww, 'needs at least one source key in "sources"');
+            else {
+              checkSources(ww, w.sources);
+              if (w.status === 'Guides agree' && w.sources.length < 2) err(ww, '"Guides agree" needs at least two sources. Use "Reported sighting" for a single guide.');
+            }
+            Object.keys(w).forEach((k) => { if (WISH_FIELDS.indexOf(k) === -1) err(ww, 'unknown field "' + k + '"'); });
+          }
+        }
         if (c.buyers !== undefined) {
           if (!Array.isArray(c.buyers)) err(where, '"buyers" must be a list');
           else c.buyers.forEach((b) => { if (BUYERS.indexOf(b) === -1) err(where, 'unknown buyer "' + b + '". Use: ' + BUYERS.join(', ')); });
@@ -702,6 +749,7 @@ function resolveData(data) {
     plan: data.plan || [],
     carBuyers: data.carBuyers || [],
     carNotes: data.carNotes || [],
+    wishNotes: data.wishNotes || [],
     cars: (data.cars || []).map(resolveCar),
     findings: data.findings || [],
     footnotes: data.footnotes || [],
@@ -738,6 +786,27 @@ function resolveCar(c) {
     condition: c.condition || '',
     note: c.note || '',
     sources: c.sources,
+    wish: resolveWish(c),
+  };
+}
+
+/* The location card of a Wish List car, with every optional field filled in
+   so the page never has to guess. Cars that are not on the list get null. */
+function resolveWish(c) {
+  const w = c.wish;
+  if (c.wishList !== true || !w || typeof w !== 'object') return null;
+  const spots = (w.spots || []).map((sp) => ({ where: sp.where, when: sp.when || '' }));
+  return {
+    status: w.status,
+    list: w.list,
+    spots,
+    /* One line for the CSV: "Main spot (when) | Alternate spot". */
+    whereText: spots.length ? spots.map((sp) => sp.where + (sp.when ? ' (' + sp.when + ')' : '')).join(' | ') : 'No fixed spot reported',
+    need: w.need,
+    how: w.how || '',
+    tracker: w.tracker || '',
+    caveat: w.caveat || '',
+    sources: w.sources,
   };
 }
 
@@ -778,6 +847,9 @@ const CSV_CODE = `
     ['Cost to register (USD)', function (c) { return c.registerCost == null ? '' : c.registerCost; }],
     ['Condition when scanned', function (c) { return c.condition; }],
     ['On Randy Wish List', function (c) { return c.wishList ? 'Yes' : 'No'; }],
+    ['Wish List evidence', function (c) { return c.wish ? c.wish.status : ''; }],
+    ['Wish List location', function (c) { return c.wish ? c.wish.whereText : ''; }],
+    ['Wish List needs', function (c) { return c.wish ? c.wish.need : ''; }],
     ['Notes', function (c) { return c.note; }],
     ['Source URLs', function (c) { return c.sources.map(function (k) { return DATA.sources[k].url; }).join(' | '); }],
   ];
@@ -798,7 +870,7 @@ const CSV_CODE = `
   function toCarsCsv(rows) { return csvFrom(CAR_CSV_COLUMNS, rows); }
 `;
 const CSV_COLUMN_COUNT = 18;
-const CAR_CSV_COLUMN_COUNT = 14;
+const CAR_CSV_COLUMN_COUNT = 17;
 
 function renderDataJs(resolved) {
   const json = JSON.stringify(resolved, null, 2).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
@@ -836,7 +908,7 @@ function buildReport(previous, current, options) {
     added: [], removed: [], changed: [],
     metaChanges: [],
     alerts: { carDuplicationVerified: [], newlyPatched: [], buildChanged: false },
-    carChanges: { added: [], removed: [], valueChanged: [] },
+    carChanges: { added: [], removed: [], valueChanged: [], wishChanged: [] },
     otherSectionsChanged: [],
     warnings: warnings.slice(),
   };
@@ -895,10 +967,14 @@ function buildReport(previous, current, options) {
     const was = oldCars[key];
     if (!was) report.carChanges.added.push(key);
     else if (was.valueText !== c.valueText) report.carChanges.valueChanged.push({ car: key, from: was.valueText, to: c.valueText });
+    /* Wish List location card added, removed or edited. */
+    if (!same((was && was.wish) || null, c.wish || null)) {
+      report.carChanges.wishChanged.push({ car: key, from: was && was.wish ? was.wish.status : null, to: c.wish ? c.wish.status : null });
+    }
   });
   Object.keys(oldCars).forEach((key) => { if (!newCars[key]) report.carChanges.removed.push(key); });
 
-  [['ladder', 'Legitimate earners table'], ['plan', 'Money plan'], ['cars', 'Car value list'], ['carBuyers', 'Car buyer cards'], ['carNotes', 'Car list notes'], ['findings', 'Key findings'], ['footnotes', 'Footnotes'], ['sources', 'Source list']].forEach((pair) => {
+  [['ladder', 'Legitimate earners table'], ['plan', 'Money plan'], ['cars', 'Car value list'], ['carBuyers', 'Car buyer cards'], ['carNotes', 'Car list notes'], ['wishNotes', 'Wish List notes'], ['findings', 'Key findings'], ['footnotes', 'Footnotes'], ['sources', 'Source list']].forEach((pair) => {
     if (!same(previous[pair[0]] === undefined ? (pair[0] === 'sources' ? {} : []) : previous[pair[0]], current[pair[0]])) report.otherSectionsChanged.push(pair[1]);
   });
 
@@ -926,6 +1002,10 @@ function printReport(report) {
     cc.valueChanged.slice(0, 20).forEach((v) => info('  $ ' + v.car + ': ' + v.from + ' -> ' + v.to));
     if (cc.added.length && cc.added.length <= 20) info('  + ' + cc.added.join(', '));
     if (cc.removed.length) info('  - ' + cc.removed.join(', '));
+  }
+  if (cc.wishChanged.length) {
+    info('Wish List location cards: ' + cc.wishChanged.length + ' added or edited');
+    cc.wishChanged.slice(0, 25).forEach((v) => info('  @ ' + v.car + ': ' + (v.from === v.to ? v.to + ' (details edited)' : (v.from || 'no card') + ' -> ' + (v.to || 'no card'))));
   }
   if (report.otherSectionsChanged.length) info('Other sections edited: ' + report.otherSectionsChanged.join(', '));
   if (report.alerts.carDuplicationVerified.length) info('ALERT: car duplication verified: ' + report.alerts.carDuplicationVerified.map((e) => e.id).join(', '));
@@ -984,7 +1064,7 @@ async function main() {
   COMPACT = opts.compact;
 
   console.log(RULE);
-  console.log('GTA VI tracker update' + (opts.dryRun ? '  (DRY RUN: nothing will be written)' : ''));
+  console.log('GTA Glitch Tracker update' + (opts.dryRun ? '  (DRY RUN: nothing will be written)' : ''));
   console.log('Folder: ' + SITE_DIR);
   console.log('Started: ' + new Date().toISOString());
   console.log(RULE);
@@ -1178,6 +1258,11 @@ async function main() {
       check('car count matches the source', tracker.cars.length === carCount, tracker.cars.length + ' cars');
       const badCars = tracker.cars.filter((c) => !Array.isArray(c.buyers) || !filled(c.valueText) || !filled(c.buyerLabel));
       check('every car has buyers and a value text', badCars.length === 0, badCars.length ? badCars.map((c) => c.name).join(', ') : '');
+      const wishCars = tracker.cars.filter((c) => c.wishList);
+      const noCard = wishCars.filter((c) => !c.wish || ALLOWED.wishStatus.indexOf(c.wish.status) === -1 || !filled(c.wish.whereText) || !filled(c.wish.need));
+      check('every Wish List car has a location card', noCard.length === 0, noCard.length ? noCard.map((c) => c.name).join(', ') : wishCars.length + ' cards');
+      const strayCard = tracker.cars.filter((c) => !c.wishList && c.wish);
+      check('no location card on a car that is not on the Wish List', strayCard.length === 0, strayCard.length ? strayCard.map((c) => c.name).join(', ') : '');
       const carsCsvOnDisk = opts.dryRun ? carsCsvText : readText(PATHS.carsCsv, 'the car value CSV');
       const carRows = parseCsv(carsCsvOnDisk.slice(1));
       check('car CSV has one row per car plus a header', carsCsvOnDisk.charCodeAt(0) === 0xfeff && carRows.length === carCount + 1, carRows.length + ' rows');
@@ -1258,6 +1343,7 @@ async function main() {
           report.changed.slice(0, 30).forEach((e) => body.push('~ ' + e.id + ': ' + e.fields.map((f) => f.field).join(', ')));
           const cc = report.carChanges;
           if (cc.added.length + cc.removed.length + cc.valueChanged.length) body.push('Car value list (' + report.totals.cars + ' cars): ' + cc.added.length + ' added, ' + cc.removed.length + ' removed, ' + cc.valueChanged.length + ' repriced.');
+          if (cc.wishChanged.length) body.push('Wish List location cards: ' + cc.wishChanged.length + ' added or edited.');
           if (report.otherSectionsChanged.length) body.push('Sections edited: ' + report.otherSectionsChanged.join(', ') + '.');
         }
         git(['commit', '-q', '-m', subject, '-m', body.join('\n') || 'Rebuilt generated files.', '-m', COMMIT_TRAILER]);
@@ -1377,7 +1463,8 @@ async function main() {
     console.log('  Car value CSV: ' + PATHS.carsCsv);
     console.log('  Change report: ' + PATHS.report);
     console.log('  GitHub push  : ' + (pushResult ? pushResult.result + (pushResult.detail ? ' (' + pushResult.detail + ')' : '') : 'not attempted'));
-    console.log('\nNext step: publish the website again so the live page shows the new data.');
+    console.log('\nNext step: the GitHub Pages site rebuilds itself after a push (about a minute).');
+    console.log('           Any other hosted copy has to be published again to show the new data.');
   }
   return 0;
 }
