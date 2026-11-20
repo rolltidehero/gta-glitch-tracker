@@ -30,29 +30,20 @@
         <p class="asof">Checked <strong id="asof-date"></strong><br />Game build <strong id="asof-build"></strong></p>
       </header>
 
+      <nav class="jump" aria-label="Sections">
+        <a href="#matrix-title" data-jump="matrix-title">Glitch matrix</a>
+        <a href="#plan-title" data-jump="plan-title">Money plan by chapter</a>
+        <a href="#earners-title" data-jump="earners-title">Legitimate earners</a>
+        <a href="#legend-title" data-jump="legend-title">How to read the matrix</a>
+      </nav>
+
       <main>
         <dl class="facts" id="facts" aria-label="Tracker status"></dl>
 
-        <section class="findings" aria-label="Key findings">
-          <article class="finding">
-            <h3>One exploit has real backing</h3>
-            <p>The Apollo Aggregates warehouse respawn (M-01) is the only money exploit with steps published by several outlets, paying about $8,640 to $14,400 per run according to <a href="https://beebom.com/gta-6-unlimited-money-glitch/" target="_blank" rel="noopener noreferrer">Beebom</a> and <a href="https://www.gtaboom.com/gta-6-apollo-aggregates-warehouse-stash-5820" target="_blank" rel="noopener noreferrer">GTA BOOM</a>.</p>
-            <p>It is a Chapter 1 method, and Chapter 1 cash is wiped except $5,000 in Family Savings, per <a href="https://gta.tech4gamers.com/gta-6/guides/money-end-of-chapter-1/" target="_blank" rel="noopener noreferrer">Tech4Gamers</a>.</p>
-          </article>
-          <article class="finding">
-            <h3>No car duplication yet</h3>
-            <p>Nobody has shown a working vehicle duplication in GTA VI. The <a href="https://github.com/CodeKingGTA/GTA6-Cheats-and-Glitches" target="_blank" rel="noopener noreferrer">CodeKingGTA research repo</a> lists it as unverified, along with mission replay and fence loop rumors.</p>
-            <p>Entries M-05 to M-07 stay in the tracker so they can be upgraded when proof appears.</p>
-          </article>
-          <article class="finding">
-            <h3>The big money comes later</h3>
-            <p>Large bank vaults pay $65,000 to $205,000 in about five minutes from the end of Chapter 4 and can be repeated after the story, per <a href="https://www.powerpyx.com/gta-6-money-guide-how-to-get-money-fast/" target="_blank" rel="noopener noreferrer">PowerPyx</a> and <a href="https://timesaver.gg/tools/gta-6/money" target="_blank" rel="noopener noreferrer">Timesaver.GG</a>.</p>
-            <p>That beats every exploit on this page without any patch risk.</p>
-          </article>
-        </section>
+        <section class="findings" id="findings" aria-label="Key findings"></section>
 
         <div class="section-head">
-          <h2 id="matrix-title">Glitch matrix</h2>
+          <h2 id="matrix-title" tabindex="-1">Glitch matrix</h2>
           <p class="count" id="count" aria-live="polite"></p>
         </div>
 
@@ -104,7 +95,13 @@
         </div>
 
         <div class="section-head">
-          <h2>Legitimate earners by chapter</h2>
+          <h2 id="plan-title" tabindex="-1">Money plan by chapter</h2>
+          <p class="count">The best-paying route at each stage, exploits included</p>
+        </div>
+        <ol class="plan" id="plan"></ol>
+
+        <div class="section-head">
+          <h2 id="earners-title" tabindex="-1">Legitimate earners by chapter</h2>
           <p class="count">For comparison with the exploits</p>
         </div>
         <div class="ref-wrap">
@@ -117,7 +114,7 @@
         </div>
 
         <div class="section-head">
-          <h2>How to read the matrix</h2>
+          <h2 id="legend-title" tabindex="-1">How to read the matrix</h2>
         </div>
         <div class="legend">
           <section class="legend-card">
@@ -133,6 +130,7 @@
             <h3>Patch status</h3>
             <dl>
               <dt><span class="badge warn">Unpatched</span></dt><dd>Still reported and no fix has been announced.</dd>
+              <dt><span class="badge pos">Patched</span></dt><dd>Patch notes or retests on a newer build say it no longer works. "Partially patched" means only some cases were fixed.</dd>
               <dt><span class="badge">Disputed</span></dt><dd>May be intended behavior or a gameplay setting.</dd>
               <dt><span class="badge pos">Not a bug</span></dt><dd>A built-in feature such as a cheat code.</dd>
               <dt><span class="badge outline">Unverified</span></dt><dd>Not confirmed to exist, so there is nothing to patch yet.</dd>
@@ -141,11 +139,7 @@
           </section>
         </div>
 
-        <div class="footnote">
-          <p>Reproducibility is an evidence tier, not a measured success rate. No outlet has published percentage rates for any GTA VI glitch.</p>
-          <p>GTA VI launched on November 19, 2026 for PS5 and Xbox Series X|S only, with no PC version or online mode announced, according to <a href="https://www.cleveland.com/news/2026/11/gta-6-is-finally-here-but-pc-players-are-still-waiting-for-one-big-answer.html" target="_blank" rel="noopener noreferrer">Cleveland.com</a> and the <a href="https://senseos.gg/guides/grand-theft-auto-vi/pc-platforms-and-online/" target="_blank" rel="noopener noreferrer">SenseOS platform guide</a>. The PC and Online columns stay in the matrix so they can be filled in when that changes.</p>
-          <p>"Unspecified" means the clip or article does not name the console. Builds 1.002.000 and 1.002.001 shipped before launch without patch notes, per <a href="https://stealthygaming.com/gta-6-patch-notes/" target="_blank" rel="noopener noreferrer">Stealthy Gaming</a>, and Rockstar has not published a known-issues list, per <a href="https://www.moneycontrol.com/technology/gta-6-players-report-map-falls-clipping-and-crashes-on-launch-day-article-14085026.html" target="_blank" rel="noopener noreferrer">Moneycontrol</a>.</p>
-        </div>
+        <div class="footnote" id="footnotes"></div>
       </main>
     </div>
 

@@ -7,14 +7,14 @@
 
   var CATEGORY_ORDER = ['Money exploit', 'Built-in cheat', 'Duplication claim', 'Hoax or scam', 'Vehicle launch', 'Flying anomaly', 'Map clipping', 'Other physics'];
   var REPRO_ORDER = ['Repeatable', 'Recurring', 'Isolated', 'Unverified claim'];
-  var STATUS_ORDER = ['Unpatched', 'Disputed', 'Not a bug', 'Unverified', 'Not real'];
-  var PLATFORM_ORDER = ['Reported', 'Unspecified', 'Not released'];
+  var STATUS_ORDER = ['Unpatched', 'Partially patched', 'Patched', 'Disputed', 'Not a bug', 'Unverified', 'Not real'];
+  var PLATFORM_ORDER = ['Reported', 'Unspecified', 'Not affected', 'Not released'];
   var MONEY_CATEGORIES = CATEGORY_ORDER.slice(0, 4);
 
   var TONES = {
     Repeatable: 'pos', Recurring: 'warn', Isolated: '', 'Unverified claim': 'outline',
-    Unpatched: 'warn', Disputed: '', 'Not a bug': 'pos', Unverified: 'outline', 'Not real': 'neg',
-    Reported: 'pos', Unspecified: 'outline', 'Not released': '',
+    Unpatched: 'warn', 'Partially patched': 'warn', Patched: 'pos', Disputed: '', 'Not a bug': 'pos', Unverified: 'outline', 'Not real': 'neg',
+    Reported: 'pos', Unspecified: 'outline', 'Not affected': '', 'Not released': '',
   };
 
   function rank(list) {
@@ -91,13 +91,16 @@
     var money = entries.filter(function (e) { return MONEY_CATEGORIES.indexOf(e.category) !== -1; });
     var withSteps = money.filter(function (e) { return e.steps.length > 0; });
     var multi = money.filter(function (e) { return e.category === 'Money exploit' && e.repro === 'Repeatable'; });
+    /* A car duplication entry counts once it is repeatable and not just a claim. */
+    var dupes = entries.filter(function (e) { return e.carDupe && e.repro === 'Repeatable' && e.status !== 'Unverified' && e.status !== 'Not real'; });
+    var patched = entries.filter(function (e) { return e.status === 'Patched' || e.status === 'Partially patched'; });
     var facts = [
       ['Entries tracked', String(entries.length), money.length + ' money-related, ' + (entries.length - money.length) + ' physics'],
-      ['Money methods with published steps', String(withSteps.length), multi.length + ' exploit backed by several outlets'],
-      ['Verified car duplication methods', '0', 'Claims only so far'],
-      ['Fixed by Rockstar', '0', 'No patch notes published'],
-      ['Latest build', T.meta.build, 'Shipped before launch'],
-      ['Platforms', T.meta.platformsLive, 'No PC version, no online mode'],
+      ['Money methods with published steps', String(withSteps.length), multi.length + (multi.length === 1 ? ' exploit' : ' exploits') + ' backed by several outlets'],
+      ['Verified car duplication methods', String(dupes.length), dupes.length ? dupes.map(function (e) { return e.id; }).join(', ') + ' in the matrix' : 'Claims only so far'],
+      ['Fixed by Rockstar', String(patched.length), T.meta.patchNote || ''],
+      ['Latest build', T.meta.build, T.meta.buildNote || ''],
+      ['Platforms', T.meta.platformsLive, T.meta.platformsNote || ''],
     ];
     var wrap = $('facts');
     facts.forEach(function (f) {
@@ -107,6 +110,101 @@
     });
     $('asof-date').textContent = T.meta.asOf;
     $('asof-build').textContent = T.meta.build;
+  }
+
+  /* Turns "[[sourceKey|label]]" inside a text into real links. */
+  function richText(text) {
+    var frag = document.createDocumentFragment();
+    var re = /\[\[([^\]|]+)\|([^\]]+)\]\]/g;
+    var last = 0;
+    var m;
+    while ((m = re.exec(text))) {
+      if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+      var s = T.sources[m[1]];
+      if (s) frag.appendChild(el('a', { href: s.url, target: '_blank', rel: 'noopener noreferrer', text: m[2] }));
+      else frag.appendChild(document.createTextNode(m[2]));
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+    return frag;
+  }
+
+  function renderFindings() {
+    var wrap = $('findings');
+    (T.findings || []).forEach(function (f) {
+      var card = el('article', { class: 'finding' }, [el('h3', { text: f.title })]);
+      f.paragraphs.forEach(function (p) { card.appendChild(el('p', null, [richText(p)])); });
+      wrap.appendChild(card);
+    });
+  }
+
+  function renderFootnotes() {
+    var wrap = $('footnotes');
+    (T.footnotes || []).forEach(function (p) { wrap.appendChild(el('p', null, [richText(p)])); });
+  }
+
+  function sourceLine(keys) {
+    var list = el('ul', { class: 'source-list' });
+    keys.forEach(function (k) { list.appendChild(el('li', null, [sourceLink(k)])); });
+    return list;
+  }
+
+  function renderPlan() {
+    var wrap = $('plan');
+    var byId = {};
+    entries.forEach(function (e) { byId[e.id] = e; });
+    (T.plan || []).forEach(function (step) {
+      var todo = el('ul');
+      step.do.forEach(function (d) { todo.appendChild(el('li', { text: d })); });
+
+      var chips = el('div', { class: 'chips' });
+      step.exploits.forEach(function (id) {
+        var e = byId[id];
+        if (!e) return;
+        var chip = el('button', { type: 'button', class: 'chip', 'data-entry': id, title: 'Show ' + id + ' in the matrix' }, [
+          el('span', { class: 'chip-id', text: id }),
+          el('span', { text: e.name }),
+          badge(e.repro),
+        ]);
+        chip.addEventListener('click', function () { showEntry(id); });
+        chips.appendChild(chip);
+      });
+      if (!step.exploits.length) chips.appendChild(el('p', { class: 'plan-none', text: 'None needed. The legitimate method pays more.' }));
+
+      wrap.appendChild(el('li', { class: 'plan-step' }, [
+        el('div', { class: 'plan-stage' }, [
+          el('p', { class: 'plan-when', text: step.stage }),
+          el('h3', { text: step.title }),
+        ]),
+        el('div', { class: 'plan-block plan-do' }, [el('h4', { text: 'What to do' }), todo]),
+        el('div', { class: 'plan-block plan-side' }, [
+          el('h4', { text: 'Expect' }),
+          el('p', { class: 'plan-expect', text: step.expect }),
+          el('h4', { text: 'Watch out' }),
+          el('p', { text: step.watch }),
+          el('h4', { text: 'Related tracker entries' }),
+          chips,
+          el('h4', { text: 'Sources' }),
+          sourceLine(step.sources),
+        ]),
+      ]));
+    });
+  }
+
+  /* Opens one entry in the matrix and scrolls to it. Clears filters if they hide it. */
+  function showEntry(id) {
+    var shown = visible().some(function (e) { return e.id === id; });
+    if (!shown) {
+      state.q = ''; state.category = ''; state.repro = ''; state.status = ''; state.moneyOnly = false;
+      els.q.value = ''; els.category.value = ''; els.repro.value = ''; els.status.value = ''; els.money.checked = false;
+    }
+    state.open[id] = true;
+    render();
+    var row = els.rows.querySelector('tr[data-id="' + id + '"]');
+    if (!row) return;
+    row.scrollIntoView({ block: 'start', behavior: 'auto' });
+    var btn = row.querySelector('.name-btn');
+    if (btn) btn.focus({ preventScroll: true });
   }
 
   function renderLadder() {
@@ -135,8 +233,11 @@
 
   function renderControls() {
     fillSelect(els.category, 'All categories', CATEGORY_ORDER);
-    fillSelect(els.repro, 'All tiers', REPRO_ORDER);
-    fillSelect(els.status, 'All statuses', STATUS_ORDER);
+    var present = function (key) {
+      return function (v) { return entries.some(function (e) { return e[key] === v; }); };
+    };
+    fillSelect(els.repro, 'All tiers', REPRO_ORDER.filter(present('repro')));
+    fillSelect(els.status, 'All statuses', STATUS_ORDER.filter(present('status')));
     [['money', 'Money potential'], ['repro', 'Reproducibility'], ['status', 'Patch status'], ['category', 'Category'], ['name', 'Name'], ['id', 'ID']].forEach(function (o) {
       els.sort.appendChild(el('option', { value: o[0], text: o[1] }));
     });
@@ -295,10 +396,23 @@
     $('reset').addEventListener('click', reset);
     $('reset-empty').addEventListener('click', reset);
     $('export').addEventListener('click', exportCsv);
+    /* In-page jump links scroll without touching the address bar. */
+    Array.prototype.forEach.call(document.querySelectorAll('[data-jump]'), function (link) {
+      link.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        var target = $(link.getAttribute('data-jump'));
+        if (!target) return;
+        target.scrollIntoView({ block: 'start', behavior: 'auto' });
+        target.focus({ preventScroll: true });
+      });
+    });
   }
 
   renderFacts();
+  renderFindings();
+  renderPlan();
   renderLadder();
+  renderFootnotes();
   renderControls();
   bind();
   state.open['M-01'] = true;
