@@ -1419,7 +1419,7 @@ async function main() {
     });
 
     /* ---- Step 8 ---- */
-    await runStep(7, (step) => {
+    await runStep(7, async (step) => {
       const checks = [];
       const check = (label, ok, detail) => {
         checks.push(ok);
@@ -1469,6 +1469,19 @@ async function main() {
       const html = readText(PATHS.indexHtml, 'index.html');
       check('index.html loads data.js and app.js', html.indexOf('src="data.js"') !== -1 && html.indexOf('src="app.js"') !== -1);
       check('index.html links to the other app', html.indexOf('href="' + OTHER_APP_URL + '"') !== -1, OTHER_APP_URL);
+      /* Copy sync check. Both repos must hold the identical update-tracker.js. This only warns
+         (never fails), because the other repo can legitimately be a few minutes behind right
+         after a push, and because the check needs the network. */
+      try {
+        const otherRepo = APP === 'cars' ? 'gta-glitch-tracker' : 'gta-car-tracker';
+        const remote = await fetchText('https://raw.githubusercontent.com/rolltidehero/' + otherRepo + '/master/update-tracker.js');
+        const norm = (t) => t.replace(/\r\n/g, '\n');
+        const same = norm(remote) === norm(fs.readFileSync(__filename, 'utf8'));
+        if (same) info('update-tracker.js matches the copy in ' + otherRepo + '.');
+        else warn('update-tracker.js differs from the copy in ' + otherRepo + '. Copy the newer file into the other repo, then commit and push both.');
+      } catch (err) {
+        info('Skipped the script copy check (' + String(err.message).split('\n')[0] + ').');
+      }
       const failed = checks.filter((ok) => !ok).length;
       if (failed) throw new StepError(failed + ' self-test check' + (failed === 1 ? '' : 's') + ' failed.', 'See the FAIL lines above. The previous files are restored automatically.', 2);
       step.note = checks.length + ' checks passed';
