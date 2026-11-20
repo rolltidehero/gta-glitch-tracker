@@ -16,7 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      TRACKER_OUT_DIR: ${{ runner.temp }}/tracker-out
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +26,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          mkdir -p "$TRACKER_OUT_DIR"
+          echo "TRACKER_OUT_DIR=$RUNNER_TEMP/tracker-out" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/tracker-out"
       - name: Run the tracker script (--auto)
         id: run
         run: |
