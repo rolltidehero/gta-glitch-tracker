@@ -139,7 +139,7 @@
       ],
       payout: '$250,000 per entry, repeatable in the same session.',
       tips: 'Keep a separate manual save from before you enter any cheat.',
-      caveats: 'Published guides say cheats disable saving and trophies for the session, so the money does not carry into your saved game. It is a sandbox tool, not a way to bank money.',
+      caveats: 'Rock Paper Shotgun and PC Gamer both say you cannot save after entering a cheat, so the money does not carry into your saved game. Rock Paper Shotgun adds that trophies and achievements are off for that session. PC Gamer says each cheat also needs its own challenge completed after the story, and lists the money cheat challenge as unknown. It is a sandbox tool, not a way to bank money.',
       reportedBy: 'Rock Paper Shotgun, PC Gamer, Leonida Interactive',
       sources: ['rps', 'pcgamerCheats', 'leonidaCheats', 'github'],
     }),
