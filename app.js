@@ -1,4 +1,4 @@
-/* GTA Glitch Tracker UI: glitch matrix, money plan and legitimate earners with search, sort, filter and CSV export. The car value list lives in the separate Car Tracker app (cars/). No storage APIs used. */
+/* GTA Glitch Tracker UI: glitch matrix, money plan and legitimate earners with search, sort, filter and CSV export. The car value list lives in the separate Car Tracker app (its own repository). No storage APIs used. */
 (function () {
   'use strict';
 

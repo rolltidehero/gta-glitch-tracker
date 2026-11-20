@@ -1,13 +1,8 @@
 # GTA Glitch Tracker
 
-Two separate apps that share one data file and one update script.
+This is the Glitch Tracker: GTA VI money exploits, duplication claims and physics glitches, with the money plan and the legitimate earners table. Live page: https://rolltidehero.github.io/gta-glitch-tracker/
 
-- **Glitch Tracker** (`/`): GTA VI money exploits, duplication claims and physics glitches, with the money plan and the legitimate earners table.
-- **Car Tracker** (`/cars/`): the car value list for the three in-game car buyers (Moses, Pay 'n' Spray and Randy) and a location card for every car on Randy's Wish List.
-
-Each app links to the other from the top and the bottom of its page.
-
-Live page: https://rolltidehero.github.io/gta-glitch-tracker/
+The car value list and Randy's Wish List locations live in the separate [Car Tracker](https://github.com/rolltidehero/gta-car-tracker) repository ([live page](https://rolltidehero.github.io/gta-car-tracker/)). Each page links to the other.
 
 Every entry is labelled by platform, evidence tier ("reproducibility"), patch status and game mode. Payouts, car values and car locations come from published guides and in-game scans reported by those guides. They are not measurements, nothing was checked in the game for this tracker, and the page shows where guides disagree.
 
@@ -15,13 +10,11 @@ Every entry is labelled by platform, evidence tier ("reproducibility"), patch st
 
 | File | Purpose |
 | --- | --- |
-| `tracker-data.json` | The only file you edit by hand. Entries, sources, money plan, car buyers, cars and Wish List location cards. |
+| `tracker-data.json` | The only file you edit by hand. Entries, sources, money plan and earners table. |
 | `update-tracker.js` | One script that validates the data, rebuilds everything, tests it, commits and pushes. |
-| `data.js` and `cars/data.js` | Generated from `tracker-data.json`, one per app. Do not edit. |
-| `index.html`, `app.js` | The Glitch Tracker page. |
-| `cars/index.html`, `cars/app.js` | The Car Tracker page. |
-| `style.css`, `base.css` | Styles shared by both apps. No build step, no dependencies. |
-| `exports/` | Generated CSV copies of the glitch matrix and the car value list. |
+| `data.js` | Generated from `tracker-data.json`. Do not edit. |
+| `index.html`, `app.js`, `style.css`, `base.css` | The page itself. No build step, no dependencies. |
+| `exports/` | Generated CSV copy of the glitch matrix. |
 
 ## How to update
 
@@ -52,34 +45,9 @@ The script prints each of its 13 steps with what is completed, in progress and r
 
 Exit codes: `0` success, `1` invalid data or failed self-test, `2` environment problem.
 
-## Wish List location cards
+## Car data
 
-Every car with `"wishList": true` in `tracker-data.json` carries a `"wish"` object, which becomes its card on the page and three columns in the car CSV:
-
-```json
-"wish": {
-  "status": "Guides agree",
-  "list": "Starting 16",
-  "spots": [
-    { "where": "Forecourt of the Sweetbay Inn, East Buckley Dr, Capri", "when": "Late at night, around 3am" },
-    { "where": "Inside the Sunrise Premium Autos showroom, El Joven Blvd, northern Southside" }
-  ],
-  "need": "Clone Key",
-  "how": "If the inn forecourt is empty, try the showroom or ask Randy for a lead.",
-  "tracker": "Optional. What guides say about its tracker.",
-  "caveat": "Optional. Where guides disagree. [[sourceKey|Link text]] makes a link.",
-  "sources": ["pushsquareRandy", "radiotimes"]
-}
-```
-
-| Field | Rule |
-| --- | --- |
-| `status` | An evidence tier, not a confirmation. `Guides agree` (two or more guides name the same place, so it needs at least two sources), `Reported sighting` (one guide or one player sighting), `Traffic search` (an area to scan), `No fixed spot` (nobody has located it; `spots` must be `[]`). |
-| `list` | `Starting 16` or `Added by a mission`. Guides count the whole list as 16, 18 or 22 cars. |
-| `spots` | The first one is shown as the main spot, the rest as alternates. `when` is optional. |
-| `need`, `sources` | Required. |
-
-The script stops with a message naming the car if a Wish List car has no card or a card breaks one of these rules.
+Car values, buyers and Wish List location cards are edited in the Car Tracker repository, not here.
 
 ## GitHub
 
@@ -103,7 +71,7 @@ Node.js 18 or newer. No npm packages. Git is optional; pushing needs a remote na
 
 ## Hourly automatic refresh
 
-`.github/workflows/refresh.yml` runs `node update-tracker.js --auto` every hour on GitHub's servers, so nothing needs to be open on any computer. It refreshes the car values from IGN, stamps the date, rebuilds, commits and pushes only when something changed, then asks GitHub Pages to rebuild. Step 13 of the script also watches a few public pages for a newer game build number and for a change in the CodeKingGTA car duplication row. It never edits glitch data. It opens a GitHub issue for a person to review instead. You can also run it by hand from the Actions tab.
+`.github/workflows/refresh.yml` runs `node update-tracker.js --auto` every hour on GitHub's servers, so nothing needs to be open on any computer. It stamps the date, rebuilds, commits and pushes only when something changed, then asks GitHub Pages to rebuild. Step 13 of the script also watches a few public pages for a newer game build number and for a change in the CodeKingGTA car duplication row. It never edits glitch data. It opens a GitHub issue for a person to review instead. You can also run it by hand from the Actions tab.
 
 Limits: a script cannot judge a new glitch write-up or verify a car duplication. Those entries still need a person to edit `tracker-data.json`.
 

@@ -271,10 +271,6 @@
         "name": "IGN vehicles guide",
         "url": "https://www.ign.com/wikis/gta-6/Vehicles"
       },
-      "gta6heists": {
-        "name": "GTA6 Heists car selling guide",
-        "url": "https://www.gta6heists.com/money/sell-stolen-cars"
-      },
       "playerTools": {
         "name": "GTA 6 Player Tools sell and register guide",
         "url": "https://gta6playertools.com/locations/sell-and-register-cars"
@@ -282,10 +278,6 @@
       "powerpyxTrophy": {
         "name": "PowerPyx trophy guide",
         "url": "https://www.powerpyx.com/gta-6-grand-theft-auto-vi-trophy-guide-roadmap/"
-      },
-      "powerpyx100": {
-        "name": "PowerPyx 100% completion guide",
-        "url": "https://www.powerpyx.com/gta-6-100-completion-checklist-guide/"
       },
       "radiotimes": {
         "name": "Radio Times Wish List guide",
@@ -298,38 +290,6 @@
       "pcgamerSteal": {
         "name": "PC Gamer car theft guide",
         "url": "https://www.pcgamer.com/games/grand-theft-auto/gta-6-how-to-steal-cars/"
-      },
-      "pushsquareMoses": {
-        "name": "Push Square Moses drop-off guide",
-        "url": "https://www.pushsquare.com/guides/gta-6-moses-vehicle-drop-off-locations"
-      },
-      "gta6motors": {
-        "name": "GTA6 Motors car selling guide",
-        "url": "https://gta6motors.com/guides/sell-cars/"
-      },
-      "pushsquareRandy": {
-        "name": "Push Square Wish List locations",
-        "url": "https://www.pushsquare.com/guides/gta-6-randys-wish-list-vehicle-locations"
-      },
-      "sportskeedaRandy": {
-        "name": "Sportskeeda Randy vehicle locations",
-        "url": "https://www.sportskeeda.com/esports/all-randy-vehicle-locations-gta-6"
-      },
-      "finalboss": {
-        "name": "FinalBoss Wish List guide",
-        "url": "https://finalboss.io/gta-6-randy-wish-list"
-      },
-      "gta6supercars": {
-        "name": "GTA6 Supercars Wish List locations",
-        "url": "https://gta6supercars.com/gta-6-randys-wish-list-locations/"
-      },
-      "tech4gamersRandy": {
-        "name": "Tech4Gamers Wish List guide",
-        "url": "https://gta.tech4gamers.com/gta-6/guides/randys-wish-list/"
-      },
-      "gtafinderRandy": {
-        "name": "GTAFinder Wish List guide",
-        "url": "https://www.gtafinder.com/gta-6/guides/randys-wish-list"
       },
       "joeyrahmzDrive": {
         "name": "JoeyRahmz on YouTube",
