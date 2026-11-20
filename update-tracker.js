@@ -88,6 +88,7 @@
 'use strict';
 
 const fs = require('fs');
+const { createHash } = require('crypto');
 const path = require('path');
 const vm = require('vm');
 const { execFileSync } = require('child_process');
@@ -113,6 +114,7 @@ const OTHER_APP_URL = APP === 'cars' ? 'https://rolltidehero.github.io/gta-glitc
 const PATHS = {
   json: path.join(SITE_DIR, 'tracker-data.json'),
   dataJs: path.join(SITE_DIR, 'data.js'),
+  feed: path.join(SITE_DIR, 'feed.xml'),
   appJs: path.join(SITE_DIR, 'app.js'),
   indexHtml: path.join(SITE_DIR, 'index.html'),
   csv: path.join(OUT_DIR, APP === 'cars' ? 'gta6_car_values.csv' : 'gta6_glitch_tracker.csv'),
@@ -1153,6 +1155,81 @@ function buildReport(previous, current, options) {
   return report;
 }
 
+/* RSS history lives in the generated feed itself, so clean Actions checkouts
+   retain recent alerts without a database. Quiet runs leave it byte-identical. */
+function renderFeed(previousXml, report, baseRevision) {
+  const slug = APP === 'cars' ? 'gta-car-tracker' : 'gta-glitch-tracker';
+  const siteUrl = 'https://rolltidehero.github.io/' + slug + '/';
+  const feedUrl = siteUrl + 'feed.xml';
+  const escapeXml = (value) => String(value)
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '')
+    .replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c]);
+  // Only recover complete item blocks from this script's own output.
+  const items = previousXml.match(/^    <item>\n[\s\S]*?^    <\/item>$/gm) || [];
+  if (items.length && !report.hasContentChanges) return previousXml;
+
+  const topic = APP === 'cars'
+    ? 'Car values, buyer information and Wish List locations'
+    : 'Glitch reports, evidence tiers and game patch status';
+  const changes = [];
+  const sample = (names) => names.slice(0, 5).join(', ') + (names.length > 5 ? ' and ' + (names.length - 5) + ' more' : '');
+  const note = (label, names) => { if (names.length) changes.push(label + ': ' + sample(names)); };
+  if (APP === 'cars') {
+    const cc = report.carChanges;
+    note('Cars added', cc.added);
+    note('Cars removed', cc.removed);
+    note('Values changed', cc.valueChanged.map((v) => v.car + ' (' + v.from + ' to ' + v.to + ')'));
+    note('Wish List cards updated', cc.wishChanged.map((v) => v.car));
+  } else {
+    if (report.alerts.buildChanged && report.build) changes.push('Tracked game build: ' + report.build);
+    note('Patch status changed', report.alerts.newlyPatched.map((e) => e.name + ' (' + e.status + ')'));
+    note('Reports added', report.added.map((e) => e.name + ' (' + e.status + ')'));
+    note('Reports updated', report.changed.map((e) => e.name));
+    note('Reports removed', report.removed.map((e) => e.name));
+  }
+  note('Other sections updated', report.otherSectionsChanged);
+  if (!changes.length && report.hasContentChanges) {
+    note('Tracker information updated', report.metaChanges.filter((m) => m.field !== 'asOf').map((m) => m.field));
+  }
+  const title = changes.length ? APP_NAME + ' update' : APP_NAME + ' RSS feed is live';
+  const description = changes.length
+    ? changes.join('. ') + '. See the tracker for details and sources.'
+    : 'Subscribe for updates when tracker content changes. ' + topic + '.';
+  // Stable across retries of the same edit before a commit, without pinning
+  // separate updates with similar summaries to the same feed ID.
+  const details = [report.added, report.removed, report.changed, report.carChanges,
+    report.otherSectionsChanged, report.metaChanges.filter((m) => m.field !== 'asOf')];
+  const id = siteUrl + '#rss-' + createHash('sha256').update(JSON.stringify([baseRevision, title, details])).digest('hex').slice(0, 24);
+  if (items.some((item) => item.includes('<guid isPermaLink="false">' + escapeXml(id) + '</guid>'))) return previousXml;
+
+  const date = new Date().toUTCString();
+  items.unshift([
+    '    <item>',
+    '      <title>' + escapeXml(title) + '</title>',
+    '      <link>' + siteUrl + '</link>',
+    '      <guid isPermaLink="false">' + escapeXml(id) + '</guid>',
+    '      <pubDate>' + date + '</pubDate>',
+    // Readers may treat the decoded description as HTML; keep it plain text.
+    '      <description>' + escapeXml(escapeXml(description)) + '</description>',
+    '    </item>',
+  ].join('\n'));
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
+    '  <channel>',
+    '    <title>' + escapeXml(APP_NAME) + '</title>',
+    '    <link>' + siteUrl + '</link>',
+    '    <description>' + escapeXml(topic) + '.</description>',
+    '    <language>en</language>',
+    '    <lastBuildDate>' + date + '</lastBuildDate>',
+    '    <atom:link href="' + feedUrl + '" rel="self" type="application/rss+xml" />',
+    ...items.slice(0, 25),
+    '  </channel>',
+    '</rss>',
+    '',
+  ].join('\n');
+}
+
 function printReport(report) {
   info('Compared with: ' + report.comparedWith);
   info('Entries: ' + report.totals.entries + '   Cars: ' + report.totals.cars + '   Patched: ' + report.totals.patched + '   Verified car duplication methods: ' + report.totals.verifiedCarDuplication);
@@ -1533,6 +1610,9 @@ async function main() {
       const html = readText(PATHS.indexHtml, 'index.html');
       check('index.html loads data.js and app.js', html.indexOf('src="data.js"') !== -1 && html.indexOf('src="app.js"') !== -1);
       check('index.html links to the other app', html.indexOf('href="' + OTHER_APP_URL + '"') !== -1, OTHER_APP_URL);
+      check('index.html advertises and links its RSS feed',
+        html.includes('<link rel="alternate" type="application/rss+xml"') &&
+        html.includes('class="rss-link" href="feed.xml"') && html.includes('Get RSS alerts!'));
       /* Copy sync check. Both repos must hold the identical update-tracker.js. This only warns
          (never fails), because the other repo can legitimately be a few minutes behind right
          after a push, and because the check needs the network. */
@@ -1566,9 +1646,11 @@ async function main() {
     /* ---- Step 9 ---- */
     await runStep(8, (step) => {
       let previous = null;
+      let baseRevision = '';
       if (hasGit) {
         try {
           previous = loadDataJs(git(['show', 'HEAD:data.js'], { maxBuffer: 64 * 1024 * 1024 }), 'data.js from the last commit');
+          baseRevision = git(['log', '-1', '--format=%H', '--', 'data.js']);
         } catch (err) {
           info('No earlier data.js in git to compare with (' + String(err.message).split('\n')[0] + ')');
         }
@@ -1577,6 +1659,17 @@ async function main() {
       report.carRefresh = carRefresh || { result: 'not requested' };
       report.commit = null; /* filled in by step 11 when a commit is made */
       printReport(report);
+      const previousXml = fs.existsSync(PATHS.feed) ? readText(PATHS.feed, 'RSS feed') : '';
+      const feed = renderFeed(previousXml, report, baseRevision);
+      if (feed !== previousXml) {
+        if (opts.dryRun) info('RSS: would publish a feed item');
+        else {
+          remember(PATHS.feed);
+          wroteFiles = true;
+          writeAtomic(PATHS.feed, feed);
+          info('RSS: wrote a new item to feed.xml');
+        }
+      } else info('RSS: no new item');
       if (!opts.dryRun) {
         writeAtomic(PATHS.report, JSON.stringify(report, null, 2) + '\n');
         info('Saved the report to ' + PATHS.report);

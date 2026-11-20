@@ -75,6 +75,10 @@ Node.js 18 or newer. No npm packages. Git is optional; pushing needs a remote na
 
 Limits: a script cannot judge a new glitch write-up or verify a car duplication. Those entries still need a person to edit `tracker-data.json`.
 
+## RSS alerts
+
+Select **Get RSS alerts!** or paste the [feed URL](https://rolltidehero.github.io/gta-glitch-tracker/feed.xml) into a feed reader. The update script generates `feed.xml` and keeps the 25 most recent items. Glitch reports, patch status, and other tracker content changes generate alerts; date-only checks do not.
+
 ## Footer version
 
 The page footer shows the latest commit hash, the commit count and the commit time, read live from the GitHub API. If GitHub is unreachable or rate limited, it shows a link to the commit history instead.
