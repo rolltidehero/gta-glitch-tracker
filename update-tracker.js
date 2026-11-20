@@ -1211,6 +1211,7 @@ async function main() {
       }
       report = buildReport(previous, resolved, opts);
       report.carRefresh = carRefresh || { result: 'not requested' };
+      report.commit = null; /* filled in by step 11 when a commit is made */
       printReport(report);
       if (!opts.dryRun) {
         writeAtomic(PATHS.report, JSON.stringify(report, null, 2) + '\n');
@@ -1263,6 +1264,11 @@ async function main() {
         const hash = git(['rev-parse', '--short', 'HEAD']);
         info('Created commit ' + hash + ': ' + subject);
         step.note = 'commit ' + hash;
+        /* Record the commit in the change report so other tools can tell "new commit" from "nothing changed". */
+        if (report) {
+          report.commit = hash;
+          try { writeAtomic(PATHS.report, JSON.stringify(report, null, 2) + '\n'); } catch (e) { /* the report is optional */ }
+        }
       } catch (err) {
         const detail = String((err.stderr && err.stderr.toString()) || err.message).trim().split('\n').slice(-3).join(' | ');
         throw new StepError('Git commit failed: ' + detail, 'The rebuilt files are fine and stay in place. If git asks who you are, run: git config user.name "Your Name" and git config user.email "you@example.com". Or run again with --no-commit.', 2);
