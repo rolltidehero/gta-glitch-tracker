@@ -139,6 +139,43 @@
     });
   }
 
+  /* Footer: git version of this app. Read live from GitHub so the page never has to be
+     rebuilt (a hash written into the files would change on every commit). */
+  function renderVersion() {
+    var el = $('version');
+    var repo = T.meta.repo;
+    if (!el || !repo) return;
+    var base = 'https://github.com/' + repo;
+    function fallback() {
+      el.textContent = '';
+      el.appendChild(document.createTextNode('Git version: not available right now. '));
+      var l = document.createElement('a');
+      l.href = base + '/commits'; l.target = '_blank'; l.rel = 'noopener noreferrer';
+      l.textContent = 'See the commit history';
+      el.appendChild(l);
+    }
+    fetch('https://api.github.com/repos/' + repo + '/commits?per_page=1')
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        var link = r.headers.get('Link') || '';
+        var m = /[?&]page=(\d+)>;\s*rel="last"/.exec(link);
+        return r.json().then(function (list) { return { c: list[0], count: m ? m[1] : '1' }; });
+      })
+      .then(function (res) {
+        var sha = res.c.sha;
+        var when = new Date(res.c.commit.committer.date);
+        var stamp = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(when) + ' CT';
+        el.textContent = '';
+        el.appendChild(document.createTextNode('Git version: '));
+        var a = document.createElement('a');
+        a.href = base + '/commit/' + sha; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        a.className = 'hash'; a.textContent = sha.slice(0, 7);
+        el.appendChild(a);
+        el.appendChild(document.createTextNode(' (commit #' + res.count + ') \u00b7 updated ' + stamp));
+      })
+      .catch(fallback);
+  }
+
   function renderFootnotes() {
     var wrap = $('footnotes');
     (T.footnotes || []).forEach(function (p) { wrap.appendChild(el('p', null, [richText(p)])); });
@@ -741,6 +778,7 @@
   renderPlan();
   renderLadder();
   renderFootnotes();
+  renderVersion();
   renderControls();
   renderCarNotes();
   renderCarControls();

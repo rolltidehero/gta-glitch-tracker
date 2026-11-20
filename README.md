@@ -25,7 +25,7 @@ Every entry is labelled by platform, evidence tier ("reproducibility"), patch st
 node update-tracker.js
 ```
 
-The script prints each of its 12 steps with what is completed, in progress and remaining. It stops with a clear message if the data is invalid, and it never writes a half-built site.
+The script prints each of its 13 steps with what is completed, in progress and remaining. It stops with a clear message if the data is invalid, and it never writes a half-built site.
 
 ## Options
 
@@ -93,3 +93,13 @@ Then open `http://localhost:4173`.
 ## Requirements
 
 Node.js 18 or newer. No npm packages. Git is optional; pushing needs a remote named `origin`.
+
+## Hourly automatic refresh
+
+`.github/workflows/refresh.yml` runs `node update-tracker.js --auto` every hour on GitHub's servers, so nothing needs to be open on any computer. It refreshes the car values from IGN, stamps the date, rebuilds, commits and pushes only when something changed, then asks GitHub Pages to rebuild. Step 13 of the script also watches a few public pages for a newer game build number and for a change in the CodeKingGTA car duplication row. It never edits glitch data. It opens a GitHub issue for a person to review instead. You can also run it by hand from the Actions tab.
+
+Limits: a script cannot judge a new glitch write-up or verify a car duplication. Those entries still need a person to edit `tracker-data.json`.
+
+## Footer version
+
+The page footer shows the latest commit hash, the commit count and the commit time, read live from the GitHub API. If GitHub is unreachable or rate limited, it shows a link to the commit history instead.

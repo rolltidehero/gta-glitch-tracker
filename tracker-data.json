@@ -5,7 +5,8 @@
     "platformsLive": "PS5, Xbox Series X|S",
     "buildNote": "Shipped before launch",
     "platformsNote": "No PC version, no online mode",
-    "patchNote": "No patch notes published"
+    "patchNote": "No patch notes published",
+    "repo": "rolltidehero/gta-glitch-tracker"
   },
   "defaults": {
     "ps5": "Unspecified",

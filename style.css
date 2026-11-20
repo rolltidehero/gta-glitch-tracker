@@ -1246,3 +1246,13 @@ th[aria-sort='descending'] .arrow {
     margin-bottom: var(--space-3);
   }
 }
+
+/* Footer git version */
+.footer-version {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.footer-version .hash { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }

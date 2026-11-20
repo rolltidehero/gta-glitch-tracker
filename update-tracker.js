@@ -32,7 +32,18 @@
        node update-tracker.js --no-push       Commit but do not push to GitHub
        node update-tracker.js --message "Mark M-05 as verified"   Custom commit subject
        node update-tracker.js --compact       Shorter progress output
+       node update-tracker.js --auto          Unattended run (used by the hourly GitHub workflow):
+                                              refresh cars, rebuild, commit, push, watch public pages
+       node update-tracker.js --watch         Also run the public-page watch (step 13) by hand
        node update-tracker.js --help          Show this help
+
+   RUNNING WITHOUT ANYONE (hourly)
+   -------------------------------
+   .github/workflows/refresh.yml runs "node update-tracker.js --auto" every hour on GitHub's
+   own servers, so nothing has to be open on any computer. The script refreshes the car values
+   from IGN, stamps the date, rebuilds, commits and pushes only when something changed, and
+   asks GitHub Pages to rebuild. What it cannot do alone is judge a new glitch write-up, so
+   those still need a person (or the assistant) to edit tracker-data.json.
 
    Requirements: Node.js 18 or newer. No npm packages. Git is optional.
 
@@ -50,6 +61,10 @@
    10. Check source links          Only with --check-links
    11. Commit to git               Skipped with --no-commit or --dry-run
    12. Push to GitHub              Only when there is something new to push
+   13. Watch public pages          Only with --auto or --watch: looks for a newer game build number
+                                   and for a change in the CodeKingGTA car duplication row. It never
+                                   edits the data. Findings are saved to a file for the workflow,
+                                   which opens a GitHub issue so a person can review them.
 
    SAFETY
    ------
@@ -77,18 +92,37 @@ const { execFileSync } = require('child_process');
    Configuration
    --------------------------------------------------------------------------- */
 const SITE_DIR = __dirname;
+/* Where the CSV exports, the change report and the watch file go. Normally the folder above
+   the site. The hourly GitHub workflow sets TRACKER_OUT_DIR to a temporary folder. */
+const OUT_DIR = process.env.TRACKER_OUT_DIR ? path.resolve(process.env.TRACKER_OUT_DIR) : path.resolve(SITE_DIR, '..');
 const PATHS = {
   json: path.join(SITE_DIR, 'tracker-data.json'),
   dataJs: path.join(SITE_DIR, 'data.js'),
   appJs: path.join(SITE_DIR, 'app.js'),
   indexHtml: path.join(SITE_DIR, 'index.html'),
-  csv: path.resolve(SITE_DIR, '..', 'gta6_glitch_tracker.csv'),
-  carsCsv: path.resolve(SITE_DIR, '..', 'gta6_car_values.csv'),
+  csv: path.join(OUT_DIR, 'gta6_glitch_tracker.csv'),
+  carsCsv: path.join(OUT_DIR, 'gta6_car_values.csv'),
   /* Copies inside the repository so the CSVs are pushed to GitHub too. */
   exportsDir: path.join(SITE_DIR, 'exports'),
   csvCopy: path.join(SITE_DIR, 'exports', 'gta6_glitch_tracker.csv'),
   carsCsvCopy: path.join(SITE_DIR, 'exports', 'gta6_car_values.csv'),
-  report: path.resolve(SITE_DIR, '..', 'gta6_tracker_last_update.json'),
+  report: path.join(OUT_DIR, 'gta6_tracker_last_update.json'),
+  watch: path.join(OUT_DIR, 'gta6_tracker_watch.json'),
+};
+
+/* Step 13 watches these public pages. It reads only; it never changes the data. */
+const WATCH = {
+  timeoutMs: 20000,
+  /* A newer game build must be named on at least this many different pages to count. */
+  minPages: 2,
+  buildPages: [
+    'https://stealthygaming.com/gta-6-patch-notes/',
+    'https://timesaver.gg/blog/gta-6-update-patch-notes',
+    'https://leonida-intel.com/gta-6-patch-notes/',
+    'https://gta.tech4gamers.com/gta-6/gameplay/updates-and-patches/',
+    'https://mygta.co/news/gta-6-launch-patches/',
+  ],
+  dupeUrl: 'https://raw.githubusercontent.com/CodeKingGTA/GTA-6-Cheats-Money-Glitches-v2/main/README.md',
 };
 
 /* The "Checked" date is written in this timezone. */
@@ -163,7 +197,7 @@ const LINK_CONCURRENCY = 8;
    Command line options
    --------------------------------------------------------------------------- */
 function parseArgs(argv) {
-  const opts = { dryRun: false, stamp: true, asOf: null, build: null, checkLinks: false, refreshCars: false, commit: true, push: true, message: null, compact: false, help: false };
+  const opts = { dryRun: false, stamp: true, asOf: null, build: null, checkLinks: false, refreshCars: false, commit: true, push: true, message: null, compact: false, help: false, auto: false, watch: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const next = () => {
@@ -181,6 +215,8 @@ function parseArgs(argv) {
     else if (a === '--no-push') opts.push = false;
     else if (a === '--message') opts.message = next();
     else if (a === '--compact') opts.compact = true;
+    else if (a === '--auto') { opts.auto = true; opts.refreshCars = true; opts.compact = true; opts.watch = true; }
+    else if (a === '--watch') opts.watch = true;
     else if (a === '--help' || a === '-h') opts.help = true;
     else throw new StepError('Unknown option: ' + a, 'Run with --help to see all options.', 1);
   }
@@ -219,6 +255,7 @@ const STEPS = [
   { name: 'Check source links' },
   { name: 'Commit to git' },
   { name: 'Push to GitHub' },
+  { name: 'Watch public pages' },
 ];
 STEPS.forEach((s, i) => { s.n = i + 1; s.state = 'pending'; s.note = ''; s.ms = 0; });
 
@@ -473,6 +510,99 @@ function git(args, options) {
 
 function gitAvailable() {
   try { return git(['rev-parse', '--is-inside-work-tree']) === 'true'; } catch (err) { return false; }
+}
+
+/* The git version of the app: latest commit and how many commits the history has. */
+function gitVersion() {
+  try {
+    const hash = git(['rev-parse', '--short', 'HEAD']);
+    const count = git(['rev-list', '--count', 'HEAD']);
+    const when = git(['log', '-1', '--format=%cI']);
+    let dirty = '';
+    try { dirty = git(['status', '--porcelain']) ? ' + uncommitted changes' : ''; } catch (e) { /* ignore */ }
+    return 'commit ' + hash + ' (#' + count + ', ' + when + ')' + dirty;
+  } catch (err) {
+    return 'unknown (no git history)';
+  }
+}
+
+/* "01.002.001" or "1.002.001" -> [1, 2, 1] so builds can be compared as numbers. */
+function parseBuild(text) {
+  const m = /^0*(\d+)\.(\d{3})\.(\d{3})$/.exec(String(text).trim());
+  return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
+}
+function compareBuild(a, b) {
+  for (let i = 0; i < 3; i++) { if (a[i] !== b[i]) return a[i] - b[i]; }
+  return 0;
+}
+
+async function fetchText(url) {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), WATCH.timeoutMs);
+  try {
+    const res = await fetch(url, { signal: ctl.signal, redirect: 'follow', headers: { 'user-agent': 'GTA-Glitch-Tracker-watch (+https://github.com/rolltidehero/gta-glitch-tracker)' } });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.text();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/* Reads the public pages and returns findings. It never edits the data. */
+async function watchPages(data) {
+  const out = { checkedAt: new Date().toISOString(), currentBuild: data.meta.build, newBuilds: [], dupeRow: null, alerts: [], failures: [] };
+  const current = parseBuild(data.meta.build);
+
+  /* 1. A newer game build number named on several different pages. */
+  const seen = {};
+  const results = await Promise.all(WATCH.buildPages.map(async (url) => {
+    try { return { url, text: await fetchText(url) }; } catch (err) { return { url, error: err.message }; }
+  }));
+  results.forEach((r) => {
+    if (r.error) { out.failures.push(r.url + ' (' + r.error + ')'); return; }
+    const found = {};
+    (r.text.match(/\b0?1\.\d{3}\.\d{3}\b/g) || []).forEach((v) => { found[v.replace(/^0+/, '')] = true; });
+    Object.keys(found).forEach((v) => {
+      const parsed = parseBuild(v);
+      if (current && parsed && compareBuild(parsed, current) > 0) { (seen[v] = seen[v] || []).push(r.url); }
+    });
+  });
+  Object.keys(seen).forEach((v) => {
+    const pages = seen[v];
+    out.newBuilds.push({ version: v, pages });
+    if (pages.length >= WATCH.minPages) {
+      out.alerts.push({
+        key: 'build-' + v,
+        title: 'Watch: possible new GTA VI build ' + v,
+        body: 'The automatic page watch found build ' + v + ' named on ' + pages.length + ' pages. The tracker is on build ' + data.meta.build + '.\n\n' + pages.map((p) => '- ' + p).join('\n') + '\n\nThis is an automatic hint, not a confirmation. Check Rockstar Support for patch notes, then update tracker-data.json (entry statuses, meta.patchNote and --build ' + v + ').',
+      });
+    }
+  });
+
+  /* 2. The car duplication row of the CodeKingGTA research repo. */
+  try {
+    const md = await fetchText(WATCH.dupeUrl);
+    const m = /Vehicle duplication\s*\|\s*([^|\n]+)\|/i.exec(md);
+    if (!m) {
+      out.dupeRow = { found: false };
+      out.failures.push(WATCH.dupeUrl + ' (the Vehicle duplication row was not found, the page layout may have changed)');
+    } else {
+      const status = m[1].replace(/\*+/g, '').trim();
+      const m5 = (data.entries || []).find((e) => e.id === 'M-05');
+      const alreadyVerified = !!(m5 && m5.carDupe === true && m5.repro === 'Repeatable');
+      out.dupeRow = { found: true, status, trackerHasVerified: alreadyVerified };
+      if (!/unverified/i.test(status) && !alreadyVerified) {
+        out.alerts.push({
+          key: 'dupe-row-' + status.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40),
+          title: 'Watch: CodeKingGTA now lists vehicle duplication as "' + status + '"',
+          body: 'The research repo ' + WATCH.dupeUrl + ' no longer lists vehicle duplication as unverified (status now: "' + status + '").\n\nThe tracker counts a car duplication as verified only with written steps and footage of the duplicate existing or being sold. Review entry M-05 before changing anything.',
+        });
+      }
+    }
+  } catch (err) {
+    out.failures.push(WATCH.dupeUrl + ' (' + err.message + ')');
+  }
+  return out;
 }
 
 /* ---------------------------------------------------------------------------
@@ -1066,6 +1196,8 @@ async function main() {
   console.log(RULE);
   console.log('GTA Glitch Tracker update' + (opts.dryRun ? '  (DRY RUN: nothing will be written)' : ''));
   console.log('Folder: ' + SITE_DIR);
+  console.log('Git version: ' + gitVersion());
+  console.log('Mode: ' + (opts.auto ? 'AUTO (unattended)' : 'manual'));
   console.log('Started: ' + new Date().toISOString());
   console.log(RULE);
 
@@ -1109,6 +1241,26 @@ async function main() {
       });
       hasGit = gitAvailable();
       info(hasGit ? 'Git repository found' : 'No git repository here (change report and commit will be limited)');
+      /* Pick up commits made elsewhere (for example by the hourly workflow) when nothing here is edited. */
+      if (hasGit && !opts.dryRun && opts.commit && opts.push) {
+        try {
+          git(['remote', 'get-url', 'origin']);
+          const branchNow = git(['rev-parse', '--abbrev-ref', 'HEAD']);
+          if (branchNow && branchNow !== 'HEAD') {
+            git(['fetch', '-q', 'origin', branchNow], { timeout: 60000 });
+            const behind = Number(git(['rev-list', '--count', 'HEAD..origin/' + branchNow]));
+            const clean = git(['status', '--porcelain']) === '';
+            if (behind > 0 && clean) {
+              git(['merge', '--ff-only', '-q', 'origin/' + branchNow]);
+              info('Fast-forwarded ' + behind + ' commit' + (behind === 1 ? '' : 's') + ' from GitHub.');
+            } else if (behind > 0) {
+              info('GitHub has ' + behind + ' newer commit' + (behind === 1 ? '' : 's') + '. This folder has edits, so they are merged at push time.');
+            }
+          }
+        } catch (err) {
+          info('Could not sync with GitHub first (' + String(err.message).split('\n')[0] + '). Continuing.');
+        }
+      }
       step.note = 'environment ready';
     });
 
@@ -1334,7 +1486,7 @@ async function main() {
         try { git(['diff', '--cached', '--quiet']); } catch (e) { staged = git(['diff', '--cached', '--name-only']); }
         if (!staged) { skip(step, 'nothing changed since the last commit'); return; }
         info('Files in this commit: ' + staged.split('\n').join(', '));
-        const subject = opts.message || 'Update tracker data (' + data.meta.asOf + ')';
+        const subject = opts.message || (opts.auto ? 'Automatic refresh (' + data.meta.asOf + ')' : 'Update tracker data (' + data.meta.asOf + ')');
         const body = [];
         if (report) {
           body.push('Entries: ' + report.totals.entries + '. Added ' + report.added.length + ', removed ' + report.removed.length + ', changed ' + report.changed.length + '.');
@@ -1409,10 +1561,25 @@ async function main() {
       }
       info(remoteHead ? 'GitHub is at ' + remoteHead.slice(0, 7) + ', local is at ' + local.slice(0, 7) + '. Pushing...' : 'The branch does not exist on GitHub yet. Pushing...');
       try {
-        git(['push', '-u', 'origin', branch], { timeout: 120000 });
-        info('Pushed ' + local.slice(0, 7) + ' to origin/' + branch);
-        step.note = 'pushed ' + local.slice(0, 7);
-        record('pushed', local.slice(0, 7));
+        try {
+          git(['push', '-u', 'origin', branch], { timeout: 120000 });
+        } catch (firstErr) {
+          const firstText = String((firstErr.stderr && firstErr.stderr.toString()) || firstErr.message);
+          if (!/rejected|non-fast-forward|fetch first/.test(firstText)) throw firstErr;
+          /* Someone else pushed first. Put this commit on top of theirs and try once more. */
+          info('GitHub has newer commits. Rebasing this commit on top of them and retrying...');
+          try {
+            git(['pull', '--rebase', 'origin', branch], { timeout: 120000 });
+          } catch (rebaseErr) {
+            try { git(['rebase', '--abort']); } catch (e) { /* nothing to abort */ }
+            throw firstErr;
+          }
+          git(['push', '-u', 'origin', branch], { timeout: 120000 });
+        }
+        const pushed = git(['rev-parse', 'HEAD']);
+        info('Pushed ' + pushed.slice(0, 7) + ' to origin/' + branch);
+        step.note = 'pushed ' + pushed.slice(0, 7);
+        record('pushed', pushed.slice(0, 7));
       } catch (err) {
         const text = String((err.stderr && err.stderr.toString()) || err.message).trim();
         const detail = text.split('\n').slice(-3).join(' | ');
@@ -1422,6 +1589,30 @@ async function main() {
         soft(step, 'push failed, commit kept locally', 'Git push failed: ' + detail + '. ' + hint);
         record('failed', detail);
       }
+    });
+
+    /* ---- Step 13 ---- */
+    await runStep(12, async (step) => {
+      if (!opts.watch) { skip(step, 'run with --auto or --watch to enable'); return; }
+      if (typeof fetch !== 'function') { skip(step, 'this Node.js version has no fetch'); return; }
+      let found;
+      try {
+        found = await watchPages(data);
+      } catch (err) {
+        soft(step, 'watch failed', 'The page watch stopped: ' + err.message + '. The rebuild itself is fine.');
+        return;
+      }
+      info('Current build in the tracker: ' + found.currentBuild);
+      info('Newer build numbers seen: ' + (found.newBuilds.length ? found.newBuilds.map((b) => b.version + ' on ' + b.pages.length + ' page(s)').join(', ') : 'none'));
+      info('CodeKingGTA vehicle duplication row: ' + (found.dupeRow && found.dupeRow.found ? '"' + found.dupeRow.status + '"' : 'not read'));
+      found.failures.forEach((f) => warn('Watch could not read ' + f));
+      found.alerts.forEach((a) => info('ALERT FOR REVIEW: ' + a.title));
+      if (report) { report.watch = found; try { writeAtomic(PATHS.report, JSON.stringify(report, null, 2) + '\n'); } catch (e) { /* optional */ } }
+      if (!opts.dryRun) {
+        writeAtomic(PATHS.watch, JSON.stringify(found, null, 2) + '\n');
+        info('Saved the watch result to ' + PATHS.watch);
+      }
+      step.note = found.alerts.length ? found.alerts.length + ' item(s) for review' : 'nothing new';
     });
   } catch (err) {
     const failed = STEPS.find((s) => s.state === 'failed');
