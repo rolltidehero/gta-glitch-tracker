@@ -1477,6 +1477,18 @@ async function main() {
         const remote = await fetchText('https://raw.githubusercontent.com/rolltidehero/' + otherRepo + '/master/update-tracker.js');
         const norm = (t) => t.replace(/\r\n/g, '\n');
         const same = norm(remote) === norm(fs.readFileSync(__filename, 'utf8'));
+        /* Shared sources check: the sources both apps cite must be identical in both data files. */
+        try {
+          const otherData = JSON.parse(await fetchText('https://raw.githubusercontent.com/rolltidehero/' + otherRepo + '/master/tracker-data.json'));
+          const mine = data.sources || {};
+          const theirs = otherData.sources || {};
+          const shared = Object.keys(mine).filter((k) => Object.prototype.hasOwnProperty.call(theirs, k));
+          const diff = shared.filter((k) => JSON.stringify(mine[k]) !== JSON.stringify(theirs[k]));
+          if (diff.length) warn('Shared source(s) differ from ' + otherRepo + ': ' + diff.join(', ') + '. Make them identical in both data files.');
+          else info(shared.length + ' shared sources match ' + otherRepo + '.');
+        } catch (err) {
+          info('Skipped the shared sources check (' + String(err.message).split('\n')[0] + ').');
+        }
         if (same) info('update-tracker.js matches the copy in ' + otherRepo + '.');
         else warn('update-tracker.js differs from the copy in ' + otherRepo + '. Copy the newer file into the other repo, then commit and push both.');
       } catch (err) {
