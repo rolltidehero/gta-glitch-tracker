@@ -1129,7 +1129,7 @@
       "stage": "Chapter 2",
       "method": "Sell untracked stolen cars to Moses",
       "payout": "$1,000 to $3,000 per car",
-      "note": "About two minutes between sales. He refuses cars stolen near his garage. Per-car values are in the car value list.",
+      "note": "About two minutes between sales. He refuses cars stolen near his garage. Per-car values are in the Car Tracker app.",
       "sources": [
         "powerpyx",
         "timesaver"
@@ -1160,7 +1160,7 @@
       "stage": "Chapter 3",
       "method": "Standard-tracker cars at Pay 'n' Spray",
       "payout": "$2,500 to $4,000 per car",
-      "note": "Three cars a day. Per-car values are in the car value list.",
+      "note": "Three cars a day. Per-car values are in the Car Tracker app.",
       "sources": [
         "timesaver",
         "forbes",
@@ -1258,7 +1258,7 @@
       "do": [
         "Finish the mission that has you take a vehicle to Moses, then sell him older cars with no tracker.",
         "Steal cars away from his garage. He refuses cars taken too close to it, and the garage reopens about two minutes after each sale.",
-        "Pick targets from the car value list below. The highest no-tracker scan so far is the '67 Transgressor at $6,060, then the '79 Youga XL at $3,190 and the '71 Parkland at $3,135, per IGN. Scan before you steal and deliver undamaged.",
+        "Pick targets from the Car Tracker app (linked at the top of this page). The highest no-tracker scan so far is the '67 Transgressor at $6,060, then the '79 Youga XL at $3,190 and the '71 Parkland at $3,135, per IGN. Scan before you steal and deliver undamaged.",
         "As Jason, hunt for Bret in Lummox County for side income.",
         "Fill the $10,000 Family Savings goal when it is offered. That lifts the checking limit from $15,000 to $100,000 so bigger payouts are not held as pending.",
         "Optional: the store robbery reset (M-03) keeps working here and the cash is no longer wiped. Stealthy Gaming and Pro-Gamer.gg also say to start the warehouse respawn (M-01) now, but Brian and Donnie are gone, so stash bags go to Dunk in Port Gellhorn after the mission Slam Dunk.",
@@ -1294,8 +1294,8 @@
       "title": "Jewelry stores, then Randy's Wish List",
       "do": [
         "Rob jewelry stores for Yasmani. Smash the cases, open the back-room safe and leave before the police arrive.",
-        "Sell cars with a Standard Tracker at any Pay 'n' Spray between robberies, three a day. The '64 Coquette tops the car value list at $12,320, ahead of the '69 Gauntlet Custom at $7,095, per IGN.",
-        "Halfway through the chapter, the Key Cloner mission for Randy unlocks his Wish List. Guides count 16, 18 or 22 cars. Deliver them in perfect condition; known locations are in the car value list.",
+        "Sell cars with a Standard Tracker at any Pay 'n' Spray between robberies, three a day. The '64 Coquette tops the Car Tracker list at $12,320, ahead of the '69 Gauntlet Custom at $7,095, per IGN.",
+        "Halfway through the chapter, the Key Cloner mission for Randy unlocks his Wish List. Guides count 16, 18 or 22 cars. Deliver them in perfect condition; known locations are in the Car Tracker app.",
         "After the mission Credit Check, small banks open up as well.",
         "Fill the $100,000 Family Savings goal when it is offered for a $500,000 checking limit and 20% off garage purchases."
       ],
@@ -3276,7 +3276,9 @@
     "Reproducibility is an evidence tier, not a measured success rate. No outlet has published percentage rates for any GTA VI glitch.",
     "GTA VI launched on November 19, 2026 for PS5 and Xbox Series X|S only, with no PC version or online mode announced, according to [[cleveland|Cleveland.com]] and the [[senseos|SenseOS platform guide]]. The PC and Online columns stay in the matrix so they can be filled in when that changes.",
     "\"Unspecified\" means the clip or article does not name the console. Builds 1.002.000 and 1.002.001 shipped before launch without patch notes, and no title update had arrived by November 20, 2026, per [[stealthy|Stealthy Gaming]]. Rockstar has not published a known-issues list, per [[moneycontrol|Moneycontrol]].",
-    "Payout figures in the money plan come from written guides, not from measurements made for this tracker.",
+    "Payout figures in the money plan come from written guides, not from measurements made for this tracker."
+  ],
+  "carFootnotes": [
     "Car values come from published scan cards and guide estimates, mainly [[ignVehicles|IGN's vehicle table]]. They change with the car's condition and were not measured for this tracker."
   ]
 }

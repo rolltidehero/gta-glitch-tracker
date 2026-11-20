@@ -1,6 +1,11 @@
 # GTA Glitch Tracker
 
-A single-page tracker for GTA VI money exploits, duplication claims and physics glitches, plus a car value list for the three in-game car buyers (Moses, Pay 'n' Spray and Randy) and a location card for every car on Randy's Wish List.
+Two separate apps that share one data file and one update script.
+
+- **Glitch Tracker** (`/`): GTA VI money exploits, duplication claims and physics glitches, with the money plan and the legitimate earners table.
+- **Car Tracker** (`/cars/`): the car value list for the three in-game car buyers (Moses, Pay 'n' Spray and Randy) and a location card for every car on Randy's Wish List.
+
+Each app links to the other from the top and the bottom of its page.
 
 Live page: https://rolltidehero.github.io/gta-glitch-tracker/
 
@@ -12,8 +17,10 @@ Every entry is labelled by platform, evidence tier ("reproducibility"), patch st
 | --- | --- |
 | `tracker-data.json` | The only file you edit by hand. Entries, sources, money plan, car buyers, cars and Wish List location cards. |
 | `update-tracker.js` | One script that validates the data, rebuilds everything, tests it, commits and pushes. |
-| `data.js` | Generated from `tracker-data.json`. Do not edit. |
-| `index.html`, `app.js`, `style.css`, `base.css` | The page itself. No build step, no dependencies. |
+| `data.js` and `cars/data.js` | Generated from `tracker-data.json`, one per app. Do not edit. |
+| `index.html`, `app.js` | The Glitch Tracker page. |
+| `cars/index.html`, `cars/app.js` | The Car Tracker page. |
+| `style.css`, `base.css` | Styles shared by both apps. No build step, no dependencies. |
 | `exports/` | Generated CSV copies of the glitch matrix and the car value list. |
 
 ## How to update

@@ -10,7 +10,8 @@
        tracker-data.json   (the only file you edit)
               |
               v
-       data.js             (generated: what the website loads)
+       data.js             (generated: what the Glitch Tracker app loads)
+       cars/data.js        (generated: what the Car Tracker app loads)
        ../gta6_glitch_tracker.csv          (generated: glitch matrix export)
        ../gta6_car_values.csv              (generated: car value list export)
        exports/*.csv                       (generated: copies of both CSVs kept in git)
@@ -54,7 +55,7 @@
     3. Refresh car values          Only with --refresh-cars (a network failure is a warning)
     4. Validate tracker data       IDs, allowed values, source links, cross references
     5. Stamp date and build        Update "Checked" date and build number
-    6. Generate data.js            Fill defaults and write the website data file
+    6. Generate data.js            Fill defaults and write one data file per app (data.js, cars/data.js)
     7. Generate CSV files          Write the glitch matrix and car value exports
     8. Self-test generated files   Load data.js like a browser would, re-read the CSVs
     9. Build change report         Compare against the last committed version
@@ -100,6 +101,10 @@ const PATHS = {
   dataJs: path.join(SITE_DIR, 'data.js'),
   appJs: path.join(SITE_DIR, 'app.js'),
   indexHtml: path.join(SITE_DIR, 'index.html'),
+  /* The Car Tracker is a second, separate app in the cars/ folder. */
+  carsDataJs: path.join(SITE_DIR, 'cars', 'data.js'),
+  carsAppJs: path.join(SITE_DIR, 'cars', 'app.js'),
+  carsIndexHtml: path.join(SITE_DIR, 'cars', 'index.html'),
   csv: path.join(OUT_DIR, 'gta6_glitch_tracker.csv'),
   carsCsv: path.join(OUT_DIR, 'gta6_car_values.csv'),
   /* Copies inside the repository so the CSVs are pushed to GitHub too. */
@@ -837,6 +842,12 @@ function validate(data) {
     else data.footnotes.forEach((p, j) => checkRichText('footnotes[' + j + ']', p));
   }
 
+  /* Car Tracker footnotes, optional */
+  if (data.carFootnotes !== undefined) {
+    if (!Array.isArray(data.carFootnotes)) err('carFootnotes', 'must be a list');
+    else data.carFootnotes.forEach((p, j) => checkRichText('carFootnotes[' + j + ']', p));
+  }
+
   sourceKeys.forEach((k) => { if (!used[k]) warn('sources.' + k + ' is not used by any entry, table or note.'); });
   return errors;
 }
@@ -883,6 +894,7 @@ function resolveData(data) {
     cars: (data.cars || []).map(resolveCar),
     findings: data.findings || [],
     footnotes: data.footnotes || [],
+    carFootnotes: data.carFootnotes || [],
   };
   return fillPlaceholders(resolved, data.meta);
 }
@@ -1002,8 +1014,22 @@ const CSV_CODE = `
 const CSV_COLUMN_COUNT = 18;
 const CAR_CSV_COLUMN_COUNT = 17;
 
-function renderDataJs(resolved) {
-  const json = JSON.stringify(resolved, null, 2).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+/* The two apps each get only their own part of the data. */
+function appView(resolved, app) {
+  const pick = (keys) => { const o = {}; keys.forEach((k) => { o[k] = resolved[k]; }); return o; };
+  return app === 'cars'
+    ? pick(['meta', 'sources', 'carBuyers', 'carNotes', 'wishNotes', 'cars', 'carFootnotes'])
+    : pick(['meta', 'sources', 'entries', 'ladder', 'plan', 'findings', 'footnotes']);
+}
+
+function renderDataJs(resolved, app) {
+  const view = appView(resolved, app);
+  /* Split the CSV helper code so each app only carries its own columns. */
+  const iCar = CSV_CODE.indexOf('  var CAR_CSV_COLUMNS');
+  const iHelp = CSV_CODE.indexOf('  function csvFrom');
+  const csvCode = app === 'cars' ? CSV_CODE.slice(iCar) : CSV_CODE.slice(0, iCar) + CSV_CODE.slice(iHelp);
+  const exportsCode = app === 'cars' ? '  DATA.toCarsCsv = toCarsCsv;' : '  DATA.toCsv = toCsv;';
+  const json = JSON.stringify(view, null, 2).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
   return [
     '/* GENERATED FILE. Do not edit by hand.',
     '   Edit tracker-data.json, then run: node update-tracker.js',
@@ -1012,9 +1038,8 @@ function renderDataJs(resolved) {
     "  'use strict';",
     '',
     '  var DATA = ' + json.replace(/\n/g, '\n  ') + ';',
-    CSV_CODE,
-    '  DATA.toCsv = toCsv;',
-    '  DATA.toCarsCsv = toCarsCsv;',
+    csvCode,
+    exportsCode,
     '  root.TRACKER = DATA;',
     "})(typeof window !== 'undefined' ? window : globalThis);",
     '',
@@ -1104,7 +1129,7 @@ function buildReport(previous, current, options) {
   });
   Object.keys(oldCars).forEach((key) => { if (!newCars[key]) report.carChanges.removed.push(key); });
 
-  [['ladder', 'Legitimate earners table'], ['plan', 'Money plan'], ['cars', 'Car value list'], ['carBuyers', 'Car buyer cards'], ['carNotes', 'Car list notes'], ['wishNotes', 'Wish List notes'], ['findings', 'Key findings'], ['footnotes', 'Footnotes'], ['sources', 'Source list']].forEach((pair) => {
+  [['ladder', 'Legitimate earners table'], ['plan', 'Money plan'], ['cars', 'Car value list'], ['carBuyers', 'Car buyer cards'], ['carNotes', 'Car list notes'], ['wishNotes', 'Wish List notes'], ['findings', 'Key findings'], ['footnotes', 'Footnotes'], ['carFootnotes', 'Car Tracker footnotes'], ['sources', 'Source list']].forEach((pair) => {
     if (!same(previous[pair[0]] === undefined ? (pair[0] === 'sources' ? {} : []) : previous[pair[0]], current[pair[0]])) report.otherSectionsChanged.push(pair[1]);
   });
 
@@ -1194,7 +1219,7 @@ async function main() {
   COMPACT = opts.compact;
 
   console.log(RULE);
-  console.log('GTA Glitch Tracker update' + (opts.dryRun ? '  (DRY RUN: nothing will be written)' : ''));
+  console.log('GTA Glitch Tracker and Car Tracker update' + (opts.dryRun ? '  (DRY RUN: nothing will be written)' : ''));
   console.log('Folder: ' + SITE_DIR);
   console.log('Git version: ' + gitVersion());
   console.log('Mode: ' + (opts.auto ? 'AUTO (unattended)' : 'manual'));
@@ -1222,6 +1247,7 @@ async function main() {
   let data;
   let resolved;
   let dataJsText;
+  let carsDataJsText;
   let csvText;
   let carsCsvText;
   let carRefresh = null;
@@ -1235,7 +1261,7 @@ async function main() {
       const major = parseInt(process.versions.node.split('.')[0], 10);
       if (major < 18) throw new StepError('Node.js ' + process.versions.node + ' is too old.', 'Install Node.js 18 or newer from https://nodejs.org and run again.', 2);
       info('Node.js ' + process.versions.node + ' OK');
-      [['json', 'tracker-data.json'], ['appJs', 'app.js'], ['indexHtml', 'index.html']].forEach((p) => {
+      [['json', 'tracker-data.json'], ['appJs', 'app.js'], ['indexHtml', 'index.html'], ['carsAppJs', 'cars/app.js'], ['carsIndexHtml', 'cars/index.html']].forEach((p) => {
         if (!fs.existsSync(PATHS[p[0]])) throw new StepError('Missing file: ' + PATHS[p[0]], 'The script must sit in the tracker folder next to ' + p[1] + '.', 2);
         info('Found ' + p[1]);
       });
@@ -1352,23 +1378,28 @@ async function main() {
     /* ---- Step 6 ---- */
     await runStep(5, (step) => {
       resolved = resolveData(data);
-      dataJsText = renderDataJs(resolved);
+      dataJsText = renderDataJs(resolved, 'glitch');
+      carsDataJsText = renderDataJs(resolved, 'cars');
       info('Filled defaults for ' + resolved.entries.length + ' entries and worked out buyers for ' + resolved.cars.length + ' cars');
-      info('data.js size: ' + (dataJsText.length / 1024).toFixed(1) + ' KB');
+      info('Glitch Tracker data.js: ' + (dataJsText.length / 1024).toFixed(1) + ' KB   Car Tracker cars/data.js: ' + (carsDataJsText.length / 1024).toFixed(1) + ' KB');
       if (opts.dryRun) { step.note = 'built in memory only'; return; }
-      remember(PATHS.dataJs);
-      wroteFiles = true;
-      writeAtomic(PATHS.dataJs, dataJsText);
-      step.note = 'wrote data.js';
+      fs.mkdirSync(path.dirname(PATHS.carsDataJs), { recursive: true });
+      [[PATHS.dataJs, dataJsText], [PATHS.carsDataJs, carsDataJsText]].forEach((pair) => {
+        remember(pair[0]);
+        wroteFiles = true;
+        writeAtomic(pair[0], pair[1]);
+      });
+      step.note = 'wrote data.js and cars/data.js';
     });
 
     /* ---- Step 7 ---- */
     await runStep(6, (step) => {
       const tracker = loadDataJs(dataJsText, 'data.js');
+      const carsTracker = loadDataJs(carsDataJsText, 'cars/data.js');
       csvText = '\ufeff' + tracker.toCsv(tracker.entries);
-      carsCsvText = '\ufeff' + tracker.toCarsCsv(tracker.cars);
+      carsCsvText = '\ufeff' + carsTracker.toCarsCsv(carsTracker.cars);
       info('Glitch matrix CSV: ' + tracker.entries.length + ' rows plus header, ' + (csvText.length / 1024).toFixed(1) + ' KB');
-      info('Car value CSV:     ' + tracker.cars.length + ' rows plus header, ' + (carsCsvText.length / 1024).toFixed(1) + ' KB');
+      info('Car value CSV:     ' + carsTracker.cars.length + ' rows plus header, ' + (carsCsvText.length / 1024).toFixed(1) + ' KB');
       if (opts.dryRun) { step.note = 'built in memory only'; return; }
       try {
         fs.mkdirSync(PATHS.exportsDir, { recursive: true });
@@ -1394,10 +1425,14 @@ async function main() {
       const onDisk = opts.dryRun ? dataJsText : readText(PATHS.dataJs, 'data.js');
       const tracker = loadDataJs(onDisk, 'data.js');
       check('data.js loads and defines TRACKER', true);
+      const carsOnDisk = opts.dryRun ? carsDataJsText : readText(PATHS.carsDataJs, 'cars/data.js');
+      const carsTracker = loadDataJs(carsOnDisk, 'cars/data.js');
+      check('cars/data.js loads and defines TRACKER', true);
+      check('the apps do not share data they should not', tracker.cars === undefined && carsTracker.entries === undefined, 'glitch app has no cars, car app has no entries');
       check('entry count matches the source', tracker.entries.length === data.entries.length, tracker.entries.length + ' entries');
       const incomplete = tracker.entries.filter((e) => ENTRY_FIELDS.some((k) => e[k] === undefined));
       check('every entry has every field', incomplete.length === 0, incomplete.length ? incomplete.map((e) => e.id).join(', ') : ENTRY_FIELDS.length + ' fields each');
-      const leftover = JSON.stringify(tracker).match(/\{(build|asOf)\}/);
+      const leftover = (JSON.stringify(tracker) + JSON.stringify(carsTracker)).match(/\{(build|asOf)\}/);
       check('no unfilled {build} or {asOf} placeholders', !leftover);
       const csvOnDisk = opts.dryRun ? csvText : readText(PATHS.csv, 'the CSV');
       check('CSV starts with a byte order mark for Excel', csvOnDisk.charCodeAt(0) === 0xfeff);
@@ -1407,13 +1442,13 @@ async function main() {
       check('every CSV row has ' + CSV_COLUMN_COUNT + ' columns', badWidth === 0, badWidth ? badWidth + ' rows differ' : '');
       check('CSV IDs match the data', rows.slice(1).every((r, i) => r[0] === data.entries[i].id));
       const carCount = (data.cars || []).length;
-      check('car count matches the source', tracker.cars.length === carCount, tracker.cars.length + ' cars');
-      const badCars = tracker.cars.filter((c) => !Array.isArray(c.buyers) || !filled(c.valueText) || !filled(c.buyerLabel));
+      check('car count matches the source', carsTracker.cars.length === carCount, carsTracker.cars.length + ' cars');
+      const badCars = carsTracker.cars.filter((c) => !Array.isArray(c.buyers) || !filled(c.valueText) || !filled(c.buyerLabel));
       check('every car has buyers and a value text', badCars.length === 0, badCars.length ? badCars.map((c) => c.name).join(', ') : '');
-      const wishCars = tracker.cars.filter((c) => c.wishList);
+      const wishCars = carsTracker.cars.filter((c) => c.wishList);
       const noCard = wishCars.filter((c) => !c.wish || ALLOWED.wishStatus.indexOf(c.wish.status) === -1 || !filled(c.wish.whereText) || !filled(c.wish.need));
       check('every Wish List car has a location card', noCard.length === 0, noCard.length ? noCard.map((c) => c.name).join(', ') : wishCars.length + ' cards');
-      const strayCard = tracker.cars.filter((c) => !c.wishList && c.wish);
+      const strayCard = carsTracker.cars.filter((c) => !c.wishList && c.wish);
       check('no location card on a car that is not on the Wish List', strayCard.length === 0, strayCard.length ? strayCard.map((c) => c.name).join(', ') : '');
       const carsCsvOnDisk = opts.dryRun ? carsCsvText : readText(PATHS.carsCsv, 'the car value CSV');
       const carRows = parseCsv(carsCsvOnDisk.slice(1));
@@ -1429,8 +1464,17 @@ async function main() {
       } catch (err) {
         check('app.js has no syntax errors', false, err.message);
       }
+      try {
+        new vm.Script(readText(PATHS.carsAppJs, 'cars/app.js'), { filename: 'cars/app.js' });
+        check('cars/app.js has no syntax errors', true);
+      } catch (err) {
+        check('cars/app.js has no syntax errors', false, err.message);
+      }
       const html = readText(PATHS.indexHtml, 'index.html');
       check('index.html loads data.js and app.js', html.indexOf('src="data.js"') !== -1 && html.indexOf('src="app.js"') !== -1);
+      const carsHtml = readText(PATHS.carsIndexHtml, 'cars/index.html');
+      check('cars/index.html loads data.js and app.js', carsHtml.indexOf('src="data.js"') !== -1 && carsHtml.indexOf('src="app.js"') !== -1);
+      check('each app links to the other', html.indexOf('href="cars/"') !== -1 && carsHtml.indexOf('href="../"') !== -1);
       const failed = checks.filter((ok) => !ok).length;
       if (failed) throw new StepError(failed + ' self-test check' + (failed === 1 ? '' : 's') + ' failed.', 'See the FAIL lines above. The previous files are restored automatically.', 2);
       step.note = checks.length + ' checks passed';
@@ -1442,6 +1486,11 @@ async function main() {
       if (hasGit) {
         try {
           previous = loadDataJs(git(['show', 'HEAD:data.js'], { maxBuffer: 64 * 1024 * 1024 }), 'data.js from the last commit');
+          /* Before the split data.js also held the cars. After it they live in cars/data.js. */
+          try {
+            const prevCars = loadDataJs(git(['show', 'HEAD:cars/data.js'], { maxBuffer: 64 * 1024 * 1024 }), 'cars/data.js from the last commit');
+            previous = Object.assign({}, previous, prevCars, { meta: previous.meta, sources: previous.sources });
+          } catch (e) { /* first run after the split: the old data.js already has the cars */ }
         } catch (err) {
           info('No earlier data.js in git to compare with (' + String(err.message).split('\n')[0] + ')');
         }
@@ -1649,7 +1698,7 @@ async function main() {
   }
   if (!opts.dryRun) {
     console.log('\nFiles:');
-    console.log('  Website data : ' + PATHS.dataJs);
+    console.log('  Website data : ' + PATHS.dataJs + ' (Glitch Tracker) and ' + PATHS.carsDataJs + ' (Car Tracker)');
     console.log('  Glitch CSV   : ' + PATHS.csv);
     console.log('  Car value CSV: ' + PATHS.carsCsv);
     console.log('  Change report: ' + PATHS.report);
