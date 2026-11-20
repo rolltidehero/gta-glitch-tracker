@@ -43,6 +43,10 @@ The script prints each of its 12 steps with what is completed, in progress and r
 
 Exit codes: `0` success, `1` invalid data or failed self-test, `2` environment problem.
 
+## GitHub
+
+The repository is private. After every commit the script pushes to the remote named `origin`. When nothing changed it reports that GitHub already has the latest commit and does nothing. A failed push is reported as a warning and the local commit is kept, so the next run pushes it.
+
 ## Viewing the page locally
 
 ```
