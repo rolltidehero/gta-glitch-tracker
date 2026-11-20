@@ -36,6 +36,9 @@
        node update-tracker.js --auto          Unattended run (used by the hourly GitHub workflow):
                                               refresh cars, rebuild, commit, push, watch public pages
        node update-tracker.js --watch         Also run the public-page watch (step 13) by hand
+       node update-tracker.js --sync-sources  Copy this app's version of every source both apps cite into
+                                              the other app's folder, rebuild, commit and push it there.
+                                              Add keys to also copy new ones: --sync-sources key1,key2
        node update-tracker.js --help          Show this help
 
    RUNNING WITHOUT ANYONE (hourly)
@@ -207,7 +210,7 @@ const LINK_CONCURRENCY = 8;
    Command line options
    --------------------------------------------------------------------------- */
 function parseArgs(argv) {
-  const opts = { dryRun: false, stamp: true, asOf: null, build: null, checkLinks: false, refreshCars: false, commit: true, push: true, message: null, compact: false, help: false, auto: false, watch: false };
+  const opts = { dryRun: false, stamp: true, asOf: null, build: null, checkLinks: false, refreshCars: false, commit: true, push: true, message: null, compact: false, help: false, auto: false, watch: false, syncSources: false, syncKeys: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const next = () => {
@@ -227,6 +230,10 @@ function parseArgs(argv) {
     else if (a === '--compact') opts.compact = true;
     else if (a === '--auto') { opts.auto = true; opts.refreshCars = true; opts.compact = true; opts.watch = true; }
     else if (a === '--watch') opts.watch = true;
+    else if (a === '--sync-sources') {
+      opts.syncSources = true;
+      if (argv[i + 1] !== undefined && !argv[i + 1].startsWith('--')) opts.syncKeys = argv[++i].split(',').map((k) => k.trim()).filter(Boolean);
+    }
     else if (a === '--help' || a === '-h') opts.help = true;
     else throw new StepError('Unknown option: ' + a, 'Run with --help to see all options.', 1);
   }
@@ -1220,10 +1227,67 @@ async function checkLinks(sources) {
 /* ---------------------------------------------------------------------------
    Main
    --------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------
+   --sync-sources: one command to keep the shared sources identical in both apps.
+   Copies this app's version of every source that both data files already hold (plus any
+   extra keys named on the command line) into the sibling folder's tracker-data.json, then
+   runs the sibling's own copy of this script there to rebuild, test, commit and push.
+   Run it from the folder where you made the edit. --dry-run only lists what would change.
+   --------------------------------------------------------------------------- */
+function syncSources(opts) {
+  const siblingName = APP === 'cars' ? 'gta6-glitch-tracker' : 'gta-car-tracker';
+  const siblingDir = path.join(SITE_DIR, '..', siblingName);
+  const siblingJson = path.join(siblingDir, 'tracker-data.json');
+  console.log(RULE);
+  console.log(APP_NAME + ': sync shared sources' + (opts.dryRun ? '  (DRY RUN)' : ''));
+  console.log('      Step 1 of 4 (in progress): find the other app folder');
+  if (!fs.existsSync(siblingJson)) {
+    throw new StepError('The other app folder was not found at ' + siblingDir + '.', 'Clone the other repo next to this folder (folder name ' + siblingName + '), then run again.', 1);
+  }
+  console.log('      Step 1 of 4 completed: ' + siblingDir);
+  console.log('      Step 2 of 4 (in progress): compare sources');
+  let mine;
+  let theirs;
+  try {
+    mine = JSON.parse(fs.readFileSync(PATHS.json, 'utf8'));
+    theirs = JSON.parse(fs.readFileSync(siblingJson, 'utf8'));
+  } catch (err) {
+    throw new StepError('Could not read a tracker-data.json file (' + err.message + ').', 'Fix the JSON, then run again.', 1);
+  }
+  const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+  const missing = opts.syncKeys.filter((k) => !has(mine.sources || {}, k));
+  if (missing.length) throw new StepError('Source key(s) not found in this app: ' + missing.join(', ') + '.', 'Add them under "sources" here first.', 1);
+  const keys = Object.keys(mine.sources || {}).filter((k) => has(theirs.sources || {}, k) || opts.syncKeys.indexOf(k) !== -1);
+  const changes = keys.filter((k) => JSON.stringify(mine.sources[k]) !== JSON.stringify((theirs.sources || {})[k]));
+  console.log('      Step 2 of 4 completed: ' + keys.length + ' shared sources, ' + changes.length + ' to copy' + (changes.length ? ' (' + changes.join(', ') + ')' : ''));
+  if (!changes.length) { console.log('      Nothing to do. Remaining steps skipped.'); return; }
+  if (opts.dryRun) { console.log('      Dry run: nothing written.'); return; }
+  console.log('      Step 3 of 4 (in progress): write the other app data file');
+  theirs.sources = theirs.sources || {};
+  changes.forEach((k) => { theirs.sources[k] = mine.sources[k]; });
+  try {
+    fs.writeFileSync(siblingJson, JSON.stringify(theirs, null, 2) + '\n');
+  } catch (err) {
+    throw new StepError('Could not write ' + siblingJson + ' (' + err.code + ').', 'Check folder permissions.', 2);
+  }
+  console.log('      Step 3 of 4 completed');
+  console.log('      Step 4 of 4 (in progress): rebuild, commit and push the other app');
+  const args = ['update-tracker.js', '--compact', '--message', 'Sync shared sources from the ' + (APP === 'cars' ? 'Car' : 'Glitch') + ' Tracker'];
+  if (!opts.commit) args.push('--no-commit');
+  if (!opts.push) args.push('--no-push');
+  try {
+    execFileSync(process.execPath, args, { cwd: siblingDir, stdio: 'inherit' });
+  } catch (err) {
+    throw new StepError('The other app build failed (exit ' + err.status + ').', 'Read the output above. Your edit is in ' + siblingJson + '; fix it there and run the script in that folder.', 2);
+  }
+  console.log('      Step 4 of 4 completed. Now run the normal command here to commit this app.');
+}
+
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (opts.help) { printHelp(); return 0; }
   COMPACT = opts.compact;
+  if (opts.syncSources) { syncSources(opts); return 0; }
 
   console.log(RULE);
   console.log(APP_NAME + ' update' + (opts.dryRun ? '  (DRY RUN: nothing will be written)' : ''));
