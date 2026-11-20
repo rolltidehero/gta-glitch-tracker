@@ -1,16 +1,16 @@
 # GTA Glitch Tracker
 
-This is the Glitch Tracker: GTA VI money exploits, duplication claims and physics glitches, with the money plan and the legitimate earners table. Live page: https://rolltidehero.github.io/gta-glitch-tracker/
+This app tracks GTA VI vehicle launches, flying anomalies, map clipping and other physics reports. [Live page](https://rolltidehero.github.io/gta-glitch-tracker/).
 
-The car value list and Randy's Wish List locations live in the separate [Car Tracker](https://github.com/rolltidehero/gta-car-tracker) repository ([live page](https://rolltidehero.github.io/gta-car-tracker/)). Each page links to the other.
+The [Money Tracker](https://rolltidehero.github.io/gta-money-tracker/) holds money reports, the chapter plan and legitimate earners. The [Car Tracker](https://rolltidehero.github.io/gta-car-tracker/) holds vehicle values and Randy's Wish List locations.
 
-Every entry is labelled by platform, evidence tier ("reproducibility"), patch status and game mode. Payouts, car values and car locations come from published guides and in-game scans reported by those guides. They are not measurements, nothing was checked in the game for this tracker, and the page shows where guides disagree.
+Every entry is labeled by platform, evidence tier ("reproducibility"), patch status and game mode. Evidence tiers describe reporting, not measured success rates. No in-game testing was done for this tracker.
 
 ## What is in here
 
 | File | Purpose |
 | --- | --- |
-| `tracker-data.json` | The only file you edit by hand. Entries, sources, money plan and earners table. |
+| `tracker-data.json` | Physics entries, sources and platform/patch notes. |
 | `update-tracker.js` | One script that validates the data, rebuilds everything, tests it, commits and pushes. |
 | `data.js` | Generated from `tracker-data.json`. Do not edit. |
 | `index.html`, `app.js`, `style.css`, `base.css` | The page itself. No build step, no dependencies. |
@@ -41,6 +41,7 @@ The script prints each of its 13 steps with what is completed, in progress and r
 | `--no-push` | Commit but do not push to GitHub. |
 | `--message "text"` | Custom commit subject. |
 | `--compact` | Shorter progress output. |
+| `--sync-sources [keys]` | Copy shared source edits to the two sibling checkouts. Add comma-separated keys to include new ones. Supports `--dry-run`. |
 | `--help` | Show the built-in help. |
 
 Exit codes: `0` success, `1` invalid data or failed self-test, `2` environment problem.
@@ -69,9 +70,9 @@ Then open `http://localhost:4173`.
 
 Node.js 18 or newer. No npm packages. Git is optional; pushing needs a remote named `origin`.
 
-## Hourly automatic refresh
+## Automatic refresh
 
-`.github/workflows/refresh.yml` runs `node update-tracker.js --auto` every hour on GitHub's servers, so nothing needs to be open on any computer. It stamps the date, rebuilds, commits and pushes only when something changed, then asks GitHub Pages to rebuild. Step 13 of the script also watches a few public pages for a newer game build number and for a change in the CodeKingGTA car duplication row. It never edits glitch data. It opens a GitHub issue for a person to review instead. You can also run it by hand from the Actions tab.
+`.github/workflows/refresh.yml` runs `node update-tracker.js --auto` every four hours at minute 23 UTC. It rebuilds generated files, commits and pushes only when something changes, then asks GitHub Pages to rebuild. Step 13 also watches public pages for possible newer game builds and opens a review issue for new findings. The Money Tracker owns the duplication-claim watch. You can run either workflow by hand from its Actions tab.
 
 Limits: a script cannot judge a new glitch write-up or verify a car duplication. Those entries still need a person to edit `tracker-data.json`.
 

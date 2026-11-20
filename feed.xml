@@ -3,10 +3,17 @@
   <channel>
     <title>GTA Glitch Tracker</title>
     <link>https://rolltidehero.github.io/gta-glitch-tracker/</link>
-    <description>Glitch reports, evidence tiers and game patch status.</description>
+    <description>Physics glitch reports, evidence tiers and game patch status.</description>
     <language>en</language>
-    <lastBuildDate>Fri, 20 Nov 2026 22:54:26 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 20 Nov 2026 23:06:15 GMT</lastBuildDate>
     <atom:link href="https://rolltidehero.github.io/gta-glitch-tracker/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>GTA Glitch Tracker update</title>
+      <link>https://rolltidehero.github.io/gta-glitch-tracker/</link>
+      <guid isPermaLink="false">https://rolltidehero.github.io/gta-glitch-tracker/#rss-6856fe748f106044c6feccde</guid>
+      <pubDate>Fri, 20 Nov 2026 23:06:15 GMT</pubDate>
+      <description>Reports removed: Apollo Aggregates warehouse loot respawn, $250,000 cheat code, Store robbery timer reset via mission restart, Pay &amp;apos;n&amp;apos; Spray daily sale limit reset, Vehicle duplication and 6 more. Other sections updated: Legitimate earners table, Money plan, Key findings, Footnotes, Source list. See the tracker for details and sources.</description>
+    </item>
     <item>
       <title>GTA Glitch Tracker RSS feed is live</title>
       <link>https://rolltidehero.github.io/gta-glitch-tracker/</link>

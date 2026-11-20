@@ -1,15 +1,15 @@
-# Hourly unattended refresh. Runs on GitHub's servers, so no computer has to be on.
-name: Hourly refresh
+# Unattended refresh every four hours.
+name: Four-hour refresh
 on:
   schedule:
-    - cron: '23 * * * *'   # every hour at minute 23 (UTC)
+    - cron: '23 */4 * * *'   # every four hours at minute 23 (UTC)
   workflow_dispatch: {}     # lets you run it by hand from the Actions tab
 permissions:
   contents: write           # commit and push the rebuilt files
   issues: write             # open a review issue when the page watch finds something
   pages: write              # ask GitHub Pages to rebuild after a push
 concurrency:
-  group: hourly-refresh
+  group: tracker-refresh
   cancel-in-progress: false
 jobs:
   refresh:

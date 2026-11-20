@@ -1,15 +1,16 @@
-/* GTA Glitch Tracker UI: glitch matrix, money plan and legitimate earners with search, sort, filter and CSV export. The car value list lives in the separate Car Tracker app (its own repository). No storage APIs used. */
+/* Shared matrix UI for the Glitch and Money Trackers. */
 (function () {
   'use strict';
 
   var T = window.TRACKER;
+  var isMoney = T.meta.repo === 'rolltidehero/gta-money-tracker';
+  var csvFilename = isMoney ? 'gta6_money_tracker.csv' : 'gta6_glitch_tracker.csv';
   var entries = T.entries.map(function (e, i) { e._i = i; return e; });
 
   var CATEGORY_ORDER = ['Money exploit', 'Built-in cheat', 'Duplication claim', 'Hoax or scam', 'Vehicle launch', 'Flying anomaly', 'Map clipping', 'Other physics'];
   var REPRO_ORDER = ['Repeatable', 'Recurring', 'Isolated', 'Unverified claim'];
   var STATUS_ORDER = ['Unpatched', 'Partially patched', 'Patched', 'Disputed', 'Not a bug', 'Unverified', 'Not real'];
   var PLATFORM_ORDER = ['Reported', 'Unspecified', 'Not affected', 'Not released'];
-  var MONEY_CATEGORIES = CATEGORY_ORDER.slice(0, 4);
 
   var TONES = {
     Repeatable: 'pos', Recurring: 'warn', Isolated: '', 'Unverified claim': 'outline',
@@ -23,7 +24,7 @@
 
   var COLUMNS = [
     { key: 'id', label: 'ID', sort: function (e) { return e._i; } },
-    { key: 'name', label: 'Glitch', sort: function (e) { return e.name.replace(/^[^A-Za-z0-9]+/, '').toLowerCase(); } },
+    { key: 'name', label: isMoney ? 'Report' : 'Glitch', sort: function (e) { return e.name.replace(/^[^A-Za-z0-9]+/, '').toLowerCase(); } },
     { key: 'category', label: 'Category', sort: function (e) { return rank(CATEGORY_ORDER)(e.category); } },
     { key: 'money', label: 'Money potential', sort: function (e) { return e.moneyRank; } },
     { key: 'ps5', label: 'PS5', sort: function (e) { return rank(PLATFORM_ORDER)(e.ps5); } },
@@ -37,14 +38,15 @@
   var COL = {};
   COLUMNS.forEach(function (c) { COL[c.key] = c; });
 
-  var state = { q: '', category: '', repro: '', status: '', moneyOnly: false, sortKey: 'money', sortDir: 1, open: {} };
+  var defaultSort = isMoney ? 'money' : 'id';
+  var state = { q: '', category: '', repro: '', status: '', sortKey: defaultSort, sortDir: 1, open: {} };
   var lastCount = 0;
 
   var $ = function (id) { return document.getElementById(id); };
   var els = {
     rows: $('rows'), head: $('head-row'), count: $('count'), empty: $('empty'),
     q: $('q'), category: $('f-category'), repro: $('f-repro'), status: $('f-status'),
-    sort: $('f-sort'), money: $('f-money'),
+    sort: $('f-sort'),
   };
 
   function el(tag, attrs, children) {
@@ -89,20 +91,25 @@
 
   /* ---------- Static pieces ---------- */
   function renderFacts() {
-    var money = entries.filter(function (e) { return MONEY_CATEGORIES.indexOf(e.category) !== -1; });
-    var withSteps = money.filter(function (e) { return e.steps.length > 0; });
-    var multi = money.filter(function (e) { return e.category === 'Money exploit' && e.repro === 'Repeatable'; });
+    var withSteps = entries.filter(function (e) { return e.steps.length > 0; });
+    var multi = entries.filter(function (e) { return e.category === 'Money exploit' && e.repro === 'Repeatable'; });
     /* A car duplication entry counts once it is repeatable and not just a claim. */
     var dupes = entries.filter(function (e) { return e.carDupe && e.repro === 'Repeatable' && e.status !== 'Unverified' && e.status !== 'Not real'; });
     var patched = entries.filter(function (e) { return e.status === 'Patched' || e.status === 'Partially patched'; });
-    var facts = [
-      ['Entries tracked', String(entries.length), money.length + ' money-related, ' + (entries.length - money.length) + ' physics'],
+    var facts = isMoney ? [
+      ['Entries tracked', String(entries.length), 'Exploits, cheats, duplication claims and scams'],
       ['Money methods with published steps', String(withSteps.length), multi.length + (multi.length === 1 ? ' exploit' : ' exploits') + ' backed by several outlets'],
       ['Verified car duplication methods', String(dupes.length), dupes.length ? dupes.map(function (e) { return e.id; }).join(', ') + ' in the matrix' : 'Claims only so far'],
+    ] : [
+      ['Entries tracked', String(entries.length), 'Physics and map reports'],
+      ['Vehicle and flight anomalies', String(entries.filter(function (e) { return e.category === 'Vehicle launch' || e.category === 'Flying anomaly'; }).length), 'Launching and flying reports'],
+      ['Map clipping', String(entries.filter(function (e) { return e.category === 'Map clipping'; }).length), 'World and collision issues'],
+    ];
+    facts = facts.concat([
       ['Fixed by Rockstar', String(patched.length), T.meta.patchNote || ''],
       ['Latest build', T.meta.build, T.meta.buildNote || ''],
       ['Platforms', T.meta.platformsLive, T.meta.platformsNote || ''],
-    ];
+    ]);
     var wrap = $('facts');
     facts.forEach(function (f) {
       var dd = el('dd', { text: f[1] });
@@ -233,8 +240,8 @@
   function showEntry(id) {
     var shown = visible().some(function (e) { return e.id === id; });
     if (!shown) {
-      state.q = ''; state.category = ''; state.repro = ''; state.status = ''; state.moneyOnly = false;
-      els.q.value = ''; els.category.value = ''; els.repro.value = ''; els.status.value = ''; els.money.checked = false;
+      state.q = ''; state.category = ''; state.repro = ''; state.status = '';
+      els.q.value = ''; els.category.value = ''; els.repro.value = ''; els.status.value = '';
     }
     state.open[id] = true;
     render();
@@ -270,10 +277,10 @@
   }
 
   function renderControls() {
-    fillSelect(els.category, 'All categories', CATEGORY_ORDER);
     var present = function (key) {
       return function (v) { return entries.some(function (e) { return e[key] === v; }); };
     };
+    fillSelect(els.category, 'All categories', CATEGORY_ORDER.filter(present('category')));
     fillSelect(els.repro, 'All tiers', REPRO_ORDER.filter(present('repro')));
     fillSelect(els.status, 'All statuses', STATUS_ORDER.filter(present('status')));
     [['money', 'Money potential'], ['repro', 'Reproducibility'], ['status', 'Patch status'], ['category', 'Category'], ['name', 'Name'], ['id', 'ID']].forEach(function (o) {
@@ -308,7 +315,6 @@
       if (state.category && e.category !== state.category) return false;
       if (state.repro && e.repro !== state.repro) return false;
       if (state.status && e.status !== state.status) return false;
-      if (state.moneyOnly && MONEY_CATEGORIES.indexOf(e.category) === -1) return false;
       var hay = haystack(e);
       return terms.every(function (t) { return hay.indexOf(t) !== -1; });
     });
@@ -408,9 +414,9 @@
 
   /* ---------- Events ---------- */
   function reset() {
-    state.q = ''; state.category = ''; state.repro = ''; state.status = ''; state.moneyOnly = false;
-    state.sortKey = 'money'; state.sortDir = 1;
-    els.q.value = ''; els.category.value = ''; els.repro.value = ''; els.status.value = ''; els.money.checked = false;
+    state.q = ''; state.category = ''; state.repro = ''; state.status = '';
+    state.sortKey = defaultSort; state.sortDir = 1;
+    els.q.value = ''; els.category.value = ''; els.repro.value = ''; els.status.value = '';
     render();
   }
 
@@ -424,7 +430,7 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
 
-  function exportCsv() { download(T.toCsv(visible()), 'gta6_glitch_tracker.csv'); }
+  function exportCsv() { download(T.toCsv(visible()), csvFilename); }
 
   /* Search button and Enter key: apply the search box, then bring the results into view. */
   function runSearch() {
@@ -441,7 +447,6 @@
     els.category.addEventListener('change', function () { state.category = els.category.value; render(); });
     els.repro.addEventListener('change', function () { state.repro = els.repro.value; render(); });
     els.status.addEventListener('change', function () { state.status = els.status.value; render(); });
-    els.money.addEventListener('change', function () { state.moneyOnly = els.money.checked; render(); });
     els.sort.addEventListener('change', function () { state.sortKey = els.sort.value; state.sortDir = 1; render(); });
     $('toolbar').addEventListener('submit', function (ev) { ev.preventDefault(); runSearch(); });
     $('reset').addEventListener('click', reset);
@@ -460,13 +465,11 @@
   }
 
   renderFacts();
-  renderFindings();
-  renderPlan();
-  renderLadder();
+  if (isMoney) { renderFindings(); renderPlan(); renderLadder(); }
   renderFootnotes();
   renderVersion();
   renderControls();
   bind();
-  state.open['M-01'] = true;
+  if (entries.length) state.open[entries[0].id] = true;
   render();
 })();

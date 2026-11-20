@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =============================================================================
-   GTA Glitch Tracker: single update script
+   GTA Trackers: single update script
    =============================================================================
 
    WHAT THIS DOES
@@ -33,17 +33,17 @@
        node update-tracker.js --no-push       Commit but do not push to GitHub
        node update-tracker.js --message "Mark M-05 as verified"   Custom commit subject
        node update-tracker.js --compact       Shorter progress output
-       node update-tracker.js --auto          Unattended run (used by the hourly GitHub workflow):
+       node update-tracker.js --auto          Unattended run (used by the four-hour GitHub workflow):
                                               refresh cars, rebuild, commit, push, watch public pages
        node update-tracker.js --watch         Also run the public-page watch (step 13) by hand
-       node update-tracker.js --sync-sources  Copy this app's version of every source both apps cite into
-                                              the other app's folder, rebuild, commit and push it there.
+       node update-tracker.js --sync-sources  Copy shared source edits into both sibling apps,
+                                              then rebuild, commit and push changed siblings.
                                               Add keys to also copy new ones: --sync-sources key1,key2
        node update-tracker.js --help          Show this help
 
-   RUNNING WITHOUT ANYONE (hourly)
+   RUNNING WITHOUT ANYONE (every four hours)
    -------------------------------
-   .github/workflows/refresh.yml runs "node update-tracker.js --auto" every hour on GitHub's
+   .github/workflows/refresh.yml runs "node update-tracker.js --auto" every four hours on GitHub's
    own servers, so nothing has to be open on any computer. The script refreshes the car values
    from IGN, stamps the date, rebuilds, commits and pushes only when something changed, and
    asks GitHub Pages to rebuild. What it cannot do alone is judge a new glitch write-up, so
@@ -98,30 +98,38 @@ const { execFileSync } = require('child_process');
    --------------------------------------------------------------------------- */
 const SITE_DIR = __dirname;
 /* Where the CSV exports, the change report and the watch file go. Normally the folder above
-   the site. The hourly GitHub workflow sets TRACKER_OUT_DIR to a temporary folder. */
+   the site. The GitHub workflow sets TRACKER_OUT_DIR to a temporary folder. */
 const OUT_DIR = process.env.TRACKER_OUT_DIR ? path.resolve(process.env.TRACKER_OUT_DIR) : path.resolve(SITE_DIR, '..');
-/* Two apps use this same script file, each in its own repository:
-     glitch = Glitch Tracker (tracker-data.json has "entries")
-     cars   = Car Tracker    (tracker-data.json has "cars", no "entries")
-   The script works out which one it is from tracker-data.json, so a copy of this file can
-   be dropped into either folder without any setting. */
+/* All three repos use this identical script. The published repo in metadata
+   identifies the app; the entries/cars fallback supports older data snapshots. */
+const APPS = {
+  glitch: { name: 'GTA Glitch Tracker', slug: 'gta-glitch-tracker', dir: 'gta6-glitch-tracker', csv: 'gta6_glitch_tracker.csv', report: 'gta6_tracker_last_update.json' },
+  cars: { name: 'GTA Car Tracker', slug: 'gta-car-tracker', dir: 'gta-car-tracker', csv: 'gta6_car_values.csv', report: 'gta6_car_tracker_last_update.json' },
+  money: { name: 'GTA Money Tracker', slug: 'gta-money-tracker', dir: 'gta-money-tracker', csv: 'gta6_money_tracker.csv', report: 'gta6_money_tracker_last_update.json' },
+};
+const appUrl = (cfg) => 'https://rolltidehero.github.io/' + cfg.slug + '/';
 const APP = (() => {
-  try { return /"entries"\s*:/.test(fs.readFileSync(path.join(__dirname, 'tracker-data.json'), 'utf8')) ? 'glitch' : 'cars'; } catch (e) { return 'glitch'; }
+  try {
+    const data = JSON.parse(fs.readFileSync(path.join(SITE_DIR, 'tracker-data.json'), 'utf8'));
+    return Object.keys(APPS).find((k) => data.meta?.repo === 'rolltidehero/' + APPS[k].slug) ||
+      (Array.isArray(data.cars) ? 'cars' : 'glitch');
+  } catch (e) { return 'glitch'; }
 })();
-const APP_NAME = APP === 'cars' ? 'GTA Car Tracker' : 'GTA Glitch Tracker';
-/* The other app's public address, used by the self-test to confirm the switcher link is there. */
-const OTHER_APP_URL = APP === 'cars' ? 'https://rolltidehero.github.io/gta-glitch-tracker/' : 'https://rolltidehero.github.io/gta-car-tracker/';
+const CONFIG = APPS[APP];
+const APP_NAME = CONFIG.name;
+const PEERS = Object.keys(APPS).filter((k) => k !== APP).map((k) => APPS[k]);
+const MONEY_CATEGORIES = ['Money exploit', 'Built-in cheat', 'Duplication claim', 'Hoax or scam'];
 const PATHS = {
   json: path.join(SITE_DIR, 'tracker-data.json'),
   dataJs: path.join(SITE_DIR, 'data.js'),
   feed: path.join(SITE_DIR, 'feed.xml'),
   appJs: path.join(SITE_DIR, 'app.js'),
   indexHtml: path.join(SITE_DIR, 'index.html'),
-  csv: path.join(OUT_DIR, APP === 'cars' ? 'gta6_car_values.csv' : 'gta6_glitch_tracker.csv'),
+  csv: path.join(OUT_DIR, CONFIG.csv),
   /* Copies inside the repository so the CSVs are pushed to GitHub too. */
   exportsDir: path.join(SITE_DIR, 'exports'),
-  csvCopy: path.join(SITE_DIR, 'exports', APP === 'cars' ? 'gta6_car_values.csv' : 'gta6_glitch_tracker.csv'),
-  report: path.join(OUT_DIR, APP === 'cars' ? 'gta6_car_tracker_last_update.json' : 'gta6_tracker_last_update.json'),
+  csvCopy: path.join(SITE_DIR, 'exports', CONFIG.csv),
+  report: path.join(OUT_DIR, CONFIG.report),
   watch: path.join(OUT_DIR, 'gta6_tracker_watch.json'),
 };
 
@@ -246,7 +254,7 @@ function printHelp() {
   const src = fs.readFileSync(__filename, 'utf8');
   const start = src.indexOf('HOW TO RUN');
   const end = src.indexOf('STEPS (shown live');
-  console.log('GTA Glitch Tracker update script\n\n   ' + src.slice(start, end).trimEnd() + '\n');
+  console.log(APP_NAME + ' update script\n\n   ' + src.slice(start, end).trimEnd() + '\n');
 }
 
 /* ---------------------------------------------------------------------------
@@ -574,7 +582,7 @@ async function watchPages(data) {
 
   /* 1. A newer game build number named on several different pages. */
   const seen = {};
-  const results = await Promise.all(WATCH.buildPages.map(async (url) => {
+  const results = await Promise.all((APP === 'glitch' ? WATCH.buildPages : []).map(async (url) => {
     try { return { url, text: await fetchText(url) }; } catch (err) { return { url, error: err.message }; }
   }));
   results.forEach((r) => {
@@ -598,7 +606,8 @@ async function watchPages(data) {
     }
   });
 
-  /* 2. The car duplication row of the CodeKingGTA research repo. */
+  /* 2. The car duplication row belongs to the Money Tracker. */
+  if (APP !== 'money') return out;
   try {
     const md = await fetchText(WATCH.dupeUrl);
     const m = /Vehicle duplication\s*\|\s*([^|\n]+)\|/i.exec(md);
@@ -631,14 +640,17 @@ function validate(data) {
   const errors = [];
   const err = (where, msg) => errors.push(where + ': ' + msg);
 
-  const isGlitch = APP === 'glitch';
-  (isGlitch ? ['meta', 'defaults', 'sources', 'entries', 'ladder'] : ['meta', 'sources', 'cars']).forEach((k) => {
+  const hasEntries = APP !== 'cars';
+  (hasEntries ? ['meta', 'defaults', 'sources', 'entries'] : ['meta', 'sources', 'cars']).forEach((k) => {
     if (data[k] === undefined || data[k] === null) err('top level', 'missing "' + k + '"');
   });
+  if (APP === 'money' && (!Array.isArray(data.plan) || !data.plan.length || !Array.isArray(data.ladder) || !data.ladder.length)) {
+    err('top level', 'the Money Tracker requires a non-empty chapter plan and earners table');
+  }
   if (errors.length) return errors;
 
   /* meta */
-  (isGlitch ? ['asOf', 'build', 'platformsLive'] : ['asOf', 'platformsLive']).forEach((k) => { if (!filled(data.meta[k])) err('meta.' + k, 'must be a non-empty text'); });
+  (hasEntries ? ['asOf', 'build', 'platformsLive'] : ['asOf', 'platformsLive']).forEach((k) => { if (!filled(data.meta[k])) err('meta.' + k, 'must be a non-empty text'); });
 
   /* sources */
   const sourceKeys = Object.keys(data.sources);
@@ -672,13 +684,13 @@ function validate(data) {
   };
 
   /* entries */
-  if (isGlitch && (!Array.isArray(data.entries) || data.entries.length === 0)) {
+  if (hasEntries && (!Array.isArray(data.entries) || data.entries.length === 0)) {
     err('entries', 'must be a non-empty list');
     return errors;
   }
   const d = data.defaults || {};
   const ids = {};
-  (isGlitch ? data.entries : []).forEach((e, i) => {
+  (hasEntries ? data.entries : []).forEach((e, i) => {
     const where = 'entries[' + i + ']' + (e && e.id ? ' (' + e.id + ')' : '');
     if (!e || typeof e !== 'object') { err(where, 'must be an object'); return; }
     if (!filled(e.id) || !/^[A-Z]-\d{2,3}$/.test(e.id)) err(where, '"id" must look like M-01');
@@ -692,6 +704,9 @@ function validate(data) {
       if (list.indexOf(value) === -1) err(where, '"' + field + '" is "' + value + '" but must be one of: ' + list.join(', '));
     };
     oneOf('category', ALLOWED.category, e.category);
+    if (MONEY_CATEGORIES.includes(e.category) !== (APP === 'money')) {
+      err(where, 'money-related reports belong only in the Money Tracker and physics reports only in the Glitch Tracker');
+    }
     oneOf('repro', ALLOWED.repro, e.repro);
     oneOf('status', ALLOWED.status, pick('status'));
     oneOf('ps5', ALLOWED.platform, pick('ps5'));
@@ -718,7 +733,7 @@ function validate(data) {
   });
 
   /* ladder (legitimate earners table) */
-  if (!isGlitch && data.ladder === undefined) { /* the Car Tracker has no earners table */ }
+  if (APP !== 'money' && data.ladder === undefined) { /* Only the Money Tracker needs this table. */ }
   else if (!Array.isArray(data.ladder)) err('ladder', 'must be a list');
   else data.ladder.forEach((r, i) => {
     const where = 'ladder[' + i + ']';
@@ -1030,7 +1045,7 @@ const CSV_CODE = `
 const CSV_COLUMN_COUNT = 18;
 const CAR_CSV_COLUMN_COUNT = 17;
 
-/* The two apps each get only their own part of the data. */
+/* Each app gets only its own part of the data. */
 function appView(resolved, app) {
   const pick = (keys) => { const o = {}; keys.forEach((k) => { o[k] = resolved[k]; }); return o; };
   return app === 'cars'
@@ -1158,8 +1173,7 @@ function buildReport(previous, current, options) {
 /* RSS history lives in the generated feed itself, so clean Actions checkouts
    retain recent alerts without a database. Quiet runs leave it byte-identical. */
 function renderFeed(previousXml, report, baseRevision) {
-  const slug = APP === 'cars' ? 'gta-car-tracker' : 'gta-glitch-tracker';
-  const siteUrl = 'https://rolltidehero.github.io/' + slug + '/';
+  const siteUrl = appUrl(CONFIG);
   const feedUrl = siteUrl + 'feed.xml';
   const escapeXml = (value) => String(value)
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '')
@@ -1170,7 +1184,8 @@ function renderFeed(previousXml, report, baseRevision) {
 
   const topic = APP === 'cars'
     ? 'Car values, buyer information and Wish List locations'
-    : 'Glitch reports, evidence tiers and game patch status';
+    : APP === 'money' ? 'Money reports, chapter plans and legitimate earners'
+      : 'Physics glitch reports, evidence tiers and game patch status';
   const changes = [];
   const sample = (names) => names.slice(0, 5).join(', ') + (names.length > 5 ? ' and ' + (names.length - 5) + ' more' : '');
   const note = (label, names) => { if (names.length) changes.push(label + ': ' + sample(names)); };
@@ -1305,59 +1320,57 @@ async function checkLinks(sources) {
    Main
    --------------------------------------------------------------------------- */
 /* ---------------------------------------------------------------------------
-   --sync-sources: one command to keep the shared sources identical in both apps.
-   Copies this app's version of every source that both data files already hold (plus any
-   extra keys named on the command line) into the sibling folder's tracker-data.json, then
-   runs the sibling's own copy of this script there to rebuild, test, commit and push.
+   --sync-sources: keep shared sources identical in all three apps.
+   Copy common keys (plus explicitly named extras) from this app into each
+   sibling, then rebuild, test, commit and push only siblings with edits.
    Run it from the folder where you made the edit. --dry-run only lists what would change.
    --------------------------------------------------------------------------- */
 function syncSources(opts) {
-  const siblingName = APP === 'cars' ? 'gta6-glitch-tracker' : 'gta-car-tracker';
-  const siblingDir = path.join(SITE_DIR, '..', siblingName);
-  const siblingJson = path.join(siblingDir, 'tracker-data.json');
-  console.log(RULE);
-  console.log(APP_NAME + ': sync shared sources' + (opts.dryRun ? '  (DRY RUN)' : ''));
-  console.log('      Step 1 of 4 (in progress): find the other app folder');
-  if (!fs.existsSync(siblingJson)) {
-    throw new StepError('The other app folder was not found at ' + siblingDir + '.', 'Clone the other repo next to this folder (folder name ' + siblingName + '), then run again.', 1);
-  }
-  console.log('      Step 1 of 4 completed: ' + siblingDir);
-  console.log('      Step 2 of 4 (in progress): compare sources');
-  let mine;
-  let theirs;
-  try {
-    mine = JSON.parse(fs.readFileSync(PATHS.json, 'utf8'));
-    theirs = JSON.parse(fs.readFileSync(siblingJson, 'utf8'));
-  } catch (err) {
-    throw new StepError('Could not read a tracker-data.json file (' + err.message + ').', 'Fix the JSON, then run again.', 1);
-  }
+  console.log(APP_NAME + ': sync shared sources' + (opts.dryRun ? ' (DRY RUN)' : ''));
+  const read = (file) => {
+    try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (err) {
+      throw new StepError('Could not read ' + file + ': ' + err.message, 'Check that the sibling folder exists and that its JSON is valid.', 1);
+    }
+  };
+  info('Step 1 of 3: read all three trackers and compare shared keys');
+  const mine = read(PATHS.json).sources || {};
   const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
-  const missing = opts.syncKeys.filter((k) => !has(mine.sources || {}, k));
+  const missing = opts.syncKeys.filter((k) => !has(mine, k));
   if (missing.length) throw new StepError('Source key(s) not found in this app: ' + missing.join(', ') + '.', 'Add them under "sources" here first.', 1);
-  const keys = Object.keys(mine.sources || {}).filter((k) => has(theirs.sources || {}, k) || opts.syncKeys.indexOf(k) !== -1);
-  const changes = keys.filter((k) => JSON.stringify(mine.sources[k]) !== JSON.stringify((theirs.sources || {})[k]));
-  console.log('      Step 2 of 4 completed: ' + keys.length + ' shared sources, ' + changes.length + ' to copy' + (changes.length ? ' (' + changes.join(', ') + ')' : ''));
-  if (!changes.length) { console.log('      Nothing to do. Remaining steps skipped.'); return; }
-  if (opts.dryRun) { console.log('      Dry run: nothing written.'); return; }
-  console.log('      Step 3 of 4 (in progress): write the other app data file');
-  theirs.sources = theirs.sources || {};
-  changes.forEach((k) => { theirs.sources[k] = mine.sources[k]; });
-  try {
-    fs.writeFileSync(siblingJson, JSON.stringify(theirs, null, 2) + '\n');
-  } catch (err) {
-    throw new StepError('Could not write ' + siblingJson + ' (' + err.code + ').', 'Check folder permissions.', 2);
+  const targets = PEERS.map((peer) => {
+    const dir = path.join(SITE_DIR, '..', peer.dir);
+    const file = path.join(dir, 'tracker-data.json');
+    const data = read(file);
+    const sources = data.sources || {};
+    const keys = Object.keys(mine).filter((k) => has(sources, k) || opts.syncKeys.includes(k));
+    const changes = keys.filter((k) => !same(mine[k], sources[k]));
+    info(peer.name + ': ' + changes.length + ' to copy' + (changes.length ? ' (' + changes.join(', ') + ')' : ''));
+    return { peer, dir, file, data, changes };
+  }).filter((t) => t.changes.length);
+  if (!targets.length || opts.dryRun) { info('No files written. Steps 2 and 3 skipped.'); return; }
+  info('Step 2 of 3: check sibling folders are ready');
+  if (opts.commit) {
+    for (const target of targets) {
+      if (execFileSync('git', ['status', '--porcelain'], { cwd: target.dir, encoding: 'utf8' }).trim()) {
+        throw new StepError(target.peer.name + ' has other uncommitted changes.', 'Commit them first or rerun with --no-commit --no-push.', 1);
+      }
+    }
   }
-  console.log('      Step 3 of 4 completed');
-  console.log('      Step 4 of 4 (in progress): rebuild, commit and push the other app');
-  const args = ['update-tracker.js', '--compact', '--message', 'Sync shared sources from the ' + (APP === 'cars' ? 'Car' : 'Glitch') + ' Tracker'];
-  if (!opts.commit) args.push('--no-commit');
-  if (!opts.push) args.push('--no-push');
-  try {
-    execFileSync(process.execPath, args, { cwd: siblingDir, stdio: 'inherit' });
-  } catch (err) {
-    throw new StepError('The other app build failed (exit ' + err.status + ').', 'Read the output above. Your edit is in ' + siblingJson + '; fix it there and run the script in that folder.', 2);
+  info('Step 3 of 3: copy edits and rebuild changed siblings');
+  for (const target of targets) {
+    const { peer, dir, file, data, changes } = target;
+    data.sources = data.sources || {};
+    for (const k of changes) Object.defineProperty(data.sources, k, { value: mine[k], enumerable: true, writable: true, configurable: true });
+    writeAtomic(file, JSON.stringify(data, null, 2) + '\n');
+    const args = ['update-tracker.js', '--no-stamp', '--compact', '--message', 'Sync shared sources from ' + APP_NAME];
+    if (!opts.commit) args.push('--no-commit');
+    if (!opts.push || !opts.commit) args.push('--no-push');
+    try { execFileSync(process.execPath, args, { cwd: dir, stdio: 'inherit' }); } catch (err) {
+      throw new StepError(peer.name + ' rebuild failed (exit ' + err.status + ').', 'Review the output and the edited data file before retrying.', 2);
+    }
+    info('Completed rebuild for ' + peer.name);
   }
-  console.log('      Step 4 of 4 completed. Now run the normal command here to commit this app.');
+  info('Done. Run the regular update here to commit the original edit.');
 }
 
 async function main() {
@@ -1414,7 +1427,7 @@ async function main() {
       });
       hasGit = gitAvailable();
       info(hasGit ? 'Git repository found' : 'No git repository here (change report and commit will be limited)');
-      /* Pick up commits made elsewhere (for example by the hourly workflow) when nothing here is edited. */
+      /* Pick up remote workflow commits when nothing here is edited. */
       if (hasGit && !opts.dryRun && opts.commit && opts.push) {
         try {
           git(['remote', 'get-url', 'origin']);
@@ -1511,10 +1524,10 @@ async function main() {
       const before = { asOf: data.meta.asOf, build: data.meta.build };
       if (opts.asOf) data.meta.asOf = opts.asOf;
       else if (opts.stamp) data.meta.asOf = todayLabel();
-      if (opts.build && APP === 'glitch') data.meta.build = opts.build;
+      if (opts.build && APP !== 'cars') data.meta.build = opts.build;
       else if (opts.build) info('--build is ignored here: the Car Tracker does not record a game build.');
       info('Checked date: ' + before.asOf + (before.asOf === data.meta.asOf ? ' (unchanged)' : ' -> ' + data.meta.asOf));
-      if (APP === 'glitch') info('Game build:   ' + before.build + (before.build === data.meta.build ? ' (unchanged)' : ' -> ' + data.meta.build));
+      if (APP !== 'cars') info('Game build:   ' + before.build + (before.build === data.meta.build ? ' (unchanged)' : ' -> ' + data.meta.build));
       const changed = before.asOf !== data.meta.asOf || before.build !== data.meta.build;
       if (changed && !opts.dryRun) {
         remember(PATHS.json);
@@ -1543,7 +1556,7 @@ async function main() {
       const tracker = loadDataJs(dataJsText, 'data.js');
       csvText = '\ufeff' + (APP === 'cars' ? tracker.toCarsCsv(tracker.cars) : tracker.toCsv(tracker.entries));
       const rowsCount = APP === 'cars' ? tracker.cars.length : tracker.entries.length;
-      info((APP === 'cars' ? 'Car value CSV: ' : 'Glitch matrix CSV: ') + rowsCount + ' rows plus header, ' + (csvText.length / 1024).toFixed(1) + ' KB');
+      info(CONFIG.csv + ': ' + rowsCount + ' rows plus header, ' + (csvText.length / 1024).toFixed(1) + ' KB');
       if (opts.dryRun) { step.note = 'built in memory only'; return; }
       try {
         fs.mkdirSync(PATHS.exportsDir, { recursive: true });
@@ -1574,7 +1587,7 @@ async function main() {
       const csvOnDisk = opts.dryRun ? csvText : readText(PATHS.csv, 'the CSV');
       check('CSV starts with a byte order mark for Excel', csvOnDisk.charCodeAt(0) === 0xfeff);
       const rows = parseCsv(csvOnDisk.slice(1));
-      if (APP === 'glitch') {
+      if (APP !== 'cars') {
         check('this app has no car data', tracker.cars === undefined);
         check('entry count matches the source', tracker.entries.length === data.entries.length, tracker.entries.length + ' entries');
         const incomplete = tracker.entries.filter((e) => ENTRY_FIELDS.some((k) => e[k] === undefined));
@@ -1609,35 +1622,29 @@ async function main() {
       }
       const html = readText(PATHS.indexHtml, 'index.html');
       check('index.html loads data.js and app.js', html.indexOf('src="data.js"') !== -1 && html.indexOf('src="app.js"') !== -1);
-      check('index.html links to the other app', html.indexOf('href="' + OTHER_APP_URL + '"') !== -1, OTHER_APP_URL);
+      PEERS.forEach((peer) => check('index.html links to ' + peer.name, html.includes('href="' + appUrl(peer) + '"')));
       check('index.html advertises and links its RSS feed',
         html.includes('<link rel="alternate" type="application/rss+xml"') &&
         html.includes('class="rss-link" href="feed.xml"') && html.includes('Get RSS alerts!'));
-      /* Copy sync check. Both repos must hold the identical update-tracker.js. This only warns
-         (never fails), because the other repo can legitimately be a few minutes behind right
-         after a push, and because the check needs the network. */
-      try {
-        const otherRepo = APP === 'cars' ? 'gta-glitch-tracker' : 'gta-car-tracker';
-        const remote = await fetchText('https://raw.githubusercontent.com/rolltidehero/' + otherRepo + '/master/update-tracker.js');
-        const norm = (t) => t.replace(/\r\n/g, '\n');
-        const same = norm(remote) === norm(fs.readFileSync(__filename, 'utf8'));
-        /* Shared sources check: the sources both apps cite must be identical in both data files. */
+      /* Lag and network failures are expected occasionally, so drift only warns. */
+      await Promise.all(PEERS.map(async (peer) => {
+        const base = 'https://raw.githubusercontent.com/rolltidehero/' + peer.slug + '/master/';
         try {
-          const otherData = JSON.parse(await fetchText('https://raw.githubusercontent.com/rolltidehero/' + otherRepo + '/master/tracker-data.json'));
+          const [remote, text] = await Promise.all([fetchText(base + 'update-tracker.js'), fetchText(base + 'tracker-data.json')]);
+          const norm = (t) => t.replace(/\r\n/g, '\n');
+          if (norm(remote) === norm(fs.readFileSync(__filename, 'utf8'))) info('Script matches ' + peer.slug);
+          else warn('update-tracker.js differs from ' + peer.slug + '. Synchronize the script across all repositories.');
+          const otherData = JSON.parse(text);
           const mine = data.sources || {};
           const theirs = otherData.sources || {};
           const shared = Object.keys(mine).filter((k) => Object.prototype.hasOwnProperty.call(theirs, k));
-          const diff = shared.filter((k) => JSON.stringify(mine[k]) !== JSON.stringify(theirs[k]));
-          if (diff.length) warn('Shared source(s) differ from ' + otherRepo + ': ' + diff.join(', ') + '. Make them identical in both data files.');
-          else info(shared.length + ' shared sources match ' + otherRepo + '.');
+          const diff = shared.filter((k) => !same(mine[k], theirs[k]));
+          if (diff.length) warn('Shared source(s) differ from ' + peer.slug + ': ' + diff.join(', '));
+          else info(shared.length + ' shared sources match ' + peer.slug + '.');
         } catch (err) {
-          info('Skipped the shared sources check (' + String(err.message).split('\n')[0] + ').');
+          info('Skipped cross-repo checks for ' + peer.slug + ': ' + String(err.message).split('\n')[0]);
         }
-        if (same) info('update-tracker.js matches the copy in ' + otherRepo + '.');
-        else warn('update-tracker.js differs from the copy in ' + otherRepo + '. Copy the newer file into the other repo, then commit and push both.');
-      } catch (err) {
-        info('Skipped the script copy check (' + String(err.message).split('\n')[0] + ').');
-      }
+      }));
       const failed = checks.filter((ok) => !ok).length;
       if (failed) throw new StepError(failed + ' self-test check' + (failed === 1 ? '' : 's') + ' failed.', 'See the FAIL lines above. The previous files are restored automatically.', 2);
       step.note = checks.length + ' checks passed';
@@ -1813,7 +1820,7 @@ async function main() {
 
     /* ---- Step 13 ---- */
     await runStep(12, async (step) => {
-      if (APP !== 'glitch') { skip(step, 'the page watch belongs to the Glitch Tracker repository'); return; }
+      if (APP === 'cars') { skip(step, 'the page watch belongs to the Glitch and Money Trackers'); return; }
       if (!opts.watch) { skip(step, 'run with --auto or --watch to enable'); return; }
       if (typeof fetch !== 'function') { skip(step, 'this Node.js version has no fetch'); return; }
       let found;
@@ -1824,8 +1831,8 @@ async function main() {
         return;
       }
       info('Current build in the tracker: ' + found.currentBuild);
-      info('Newer build numbers seen: ' + (found.newBuilds.length ? found.newBuilds.map((b) => b.version + ' on ' + b.pages.length + ' page(s)').join(', ') : 'none'));
-      info('CodeKingGTA vehicle duplication row: ' + (found.dupeRow && found.dupeRow.found ? '"' + found.dupeRow.status + '"' : 'not read'));
+      if (APP === 'glitch') info('Newer build numbers seen: ' + (found.newBuilds.length ? found.newBuilds.map((b) => b.version + ' on ' + b.pages.length + ' page(s)').join(', ') : 'none'));
+      if (APP === 'money') info('CodeKingGTA vehicle duplication row: ' + (found.dupeRow && found.dupeRow.found ? '"' + found.dupeRow.status + '"' : 'not read'));
       found.failures.forEach((f) => warn('Watch could not read ' + f));
       found.alerts.forEach((a) => info('ALERT FOR REVIEW: ' + a.title));
       if (report) { report.watch = found; try { writeAtomic(PATHS.report, JSON.stringify(report, null, 2) + '\n'); } catch (e) { /* optional */ } }
@@ -1871,7 +1878,7 @@ async function main() {
   if (!opts.dryRun) {
     console.log('\nFiles:');
     console.log('  Website data : ' + PATHS.dataJs);
-    console.log('  ' + (APP === 'cars' ? 'Car value CSV' : 'Glitch CSV') + ' : ' + PATHS.csv);
+    console.log('  CSV          : ' + PATHS.csv);
     console.log('  Change report: ' + PATHS.report);
     console.log('  GitHub push  : ' + (pushResult ? pushResult.result + (pushResult.detail ? ' (' + pushResult.detail + ')' : '') : 'not attempted'));
     console.log('\nNext step: the GitHub Pages site rebuilds itself after a push (about a minute).');
