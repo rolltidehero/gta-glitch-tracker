@@ -6,7 +6,7 @@
 
   var DATA = {
     "meta": {
-      "asOf": "November 19, 2026",
+      "asOf": "November 20, 2026",
       "build": "1.002.001",
       "platformsLive": "PS5, Xbox Series X|S",
       "buildNote": "Shipped before launch",
@@ -213,6 +213,58 @@
       "gtabaseSavings": {
         "name": "GTABase Save for the Future guide",
         "url": "https://www.gtabase.com/gta-6/missions/save-for-the-future"
+      },
+      "ignMoneyGlitch": {
+        "name": "IGN on the money glitches",
+        "url": "https://www.ign.com/articles/gta-6-players-multiple-money-glitches"
+      },
+      "vicecitydb": {
+        "name": "Vice City DB money glitch page",
+        "url": "https://vicecitydb.org/guides/money-glitch"
+      },
+      "millgaming": {
+        "name": "MillGaming on YouTube",
+        "url": "https://www.youtube.com/watch?v=5-RRI7Oy-OA"
+      },
+      "progamerMoney": {
+        "name": "Pro-Gamer.gg money glitch guide",
+        "url": "https://pro-gamer.gg/gta-6-unlimited-money-glitch-guide-store-reset-apollo-aggregates-duplication-cheat-code/"
+      },
+      "damnmodz": {
+        "name": "DamnModz money guide",
+        "url": "https://damnmodz.com/wiki/gta-6/guides/make-money/"
+      },
+      "stealthyGlitch": {
+        "name": "Stealthy Gaming money glitch guide",
+        "url": "https://stealthygaming.com/gta-6-money-glitch/"
+      },
+      "ignFences": {
+        "name": "IGN fence guide",
+        "url": "https://widgets.ign.com/wikis/gta-6/How_to_Sell_Cars,_Collectibles,_and_Stolen_Goods_-_Fence_Contact_Locations"
+      },
+      "powerpyxFences": {
+        "name": "PowerPyx fence guide",
+        "url": "https://www.powerpyx.com/gta-6-all-fence-locations-how-to-fence-stolen-goods/"
+      },
+      "tech4gamersFences": {
+        "name": "Tech4Gamers fence guide",
+        "url": "https://gta.tech4gamers.com/gta-6/guides/all-fences/"
+      },
+      "pcgamerMoney": {
+        "name": "PC Gamer money guide",
+        "url": "https://www.pcgamer.com/games/grand-theft-auto/gta-6-how-to-make-money/"
+      },
+      "ignRacing": {
+        "name": "IGN racing guide",
+        "url": "https://www.ign.com/wikis/gta-6/Racing"
+      },
+      "githubV2": {
+        "name": "CodeKingGTA v2 research repo",
+        "url": "https://github.com/CodeKingGTA/GTA-6-Cheats-Money-Glitches-v2/tree/main"
+      },
+      "futurism": {
+        "name": "Futurism",
+        "url": "https://futurism.com/future-society/gta-6-bugs"
       }
     },
     "entries": [
@@ -236,13 +288,13 @@
           "When a stash bag is full, store it in your vehicle and go back for the rest.",
           "Make a manual save, then load it. You respawn at Jason's house and the bags are still in the vehicle.",
           "Return to the warehouse. Most loot is back. Repeat until the vehicle is full.",
-          "Sell at Brian's Lockup in southwest Key Lento (keypad code 7700) or at Donnie's Trailer in Key Lento. Compare both quotes on the map first.",
+          "Sell at Brian's Lockup in southwest Key Lento (keypad code 7700) or at Donnie's Trailer in Key Lento while they are open (Chapter 1). Compare both quotes on the map first. From Chapter 2 the goods fence is Dunk in Port Gellhorn.",
           "Wait for the fence's text, then collect the cash from the mailbox at Jason's safehouse and deposit it at an ATM."
         ],
         "payout": "Beebom: about $11,280 on the first run and $8,640 on each later run. Game Rant: about $8,000 every five minutes. GTA BOOM: one full clear was quoted $14,400 by Donnie and $12,720 by Brian. Nerpah: $13,000 per run; the \"$250k per hour\" in the video title is not backed up in the video.",
-        "tips": "Use manual saves, never autosaves. If loot does not return, reload again or wait a few in-game days. Spend the proceeds on Chapter 1 gear and move $5,000 into Family Savings before starting the mission Tourist Trap. That money cannot be withdrawn later.",
-        "caveats": "This is a Chapter 1 method. Brian and Donnie stop being available after Chapter 1, and pocket cash, the BuckMe checking balance and the floor stash are all lost when Tourist Trap starts. Only money moved into Family Savings carries into Chapter 2, and it can never be withdrawn, so it raises your checking limit rather than your spending money. The first savings goal is $5,000. The first checking limit is $15,000 and payments above it are held as pending. Pocket cash is capped at $20,000 and lost when Wasted or Busted. GTA BOOM found three loot sources that do not come back, and notes the site is an Illegal Operation that restocks by design, so this may be a fast cooldown rather than a true duplication. games.gg and the CodeKingGTA repo still list no independently verified, version-stamped money glitch.",
-        "reportedBy": "Beebom, Game Rant, GTA BOOM, Nerpah",
+        "tips": "Use manual saves, never autosaves. If loot does not return, reload again or wait a few in-game days. If you run it in Chapter 1, spend the proceeds on gear and move $5,000 into Family Savings before starting the mission Tourist Trap. That money cannot be withdrawn later.",
+        "caveats": "Still reported working on November 20, 2026 by Beebom (now titled \"Tested and Working\"), Stealthy Gaming and IGN, though DamnModz says players report mixed results. Guides disagree on when to use it. Stealthy Gaming and Pro-Gamer.gg say to wait for Chapter 2 because Chapter 1 money is wiped. IGN and PowerPyx say Brian's Lockup closes when Chapter 1 ends, and Tech4Gamers says Donnie stops buying after the mission Swamped, so in Chapter 2 the bags have to go to Dunk in Port Gellhorn (after the mission Slam Dunk), who pays low rates. No guide found so far shows a Chapter 2 run with a payout, so every figure here is a Chapter 1 figure. In Chapter 1, pocket cash, the BuckMe checking balance and the floor stash are all lost when Tourist Trap starts. Only money moved into Family Savings carries into Chapter 2, and it can never be withdrawn, so it raises your checking limit rather than your spending money. The first savings goal is $5,000. The first checking limit is $15,000 and payments above it are held as pending. Pocket cash is capped at $20,000 and lost when Wasted or Busted. GTA BOOM found three loot sources that do not come back, and notes the site is an Illegal Operation that restocks by design, so this may be a fast cooldown rather than a true duplication. games.gg and the CodeKingGTA repo still list no independently verified, version-stamped money glitch.",
+        "reportedBy": "Beebom, Game Rant, GTA BOOM, Nerpah, Stealthy Gaming, IGN",
         "sources": [
           "beebomMoney",
           "gamerant",
@@ -253,7 +305,14 @@
           "gamesradarMoney",
           "gamesggMoney",
           "github",
-          "powerpyxSavings"
+          "powerpyxSavings",
+          "stealthyGlitch",
+          "ignMoneyGlitch",
+          "progamerMoney",
+          "damnmodz",
+          "ignFences",
+          "powerpyxFences",
+          "tech4gamersFences"
         ],
         "carDupe": false
       },
@@ -293,30 +352,36 @@
         "name": "Store robbery timer reset via mission restart",
         "category": "Money exploit",
         "moneyRank": 3,
-        "money": "Not stated (title claims $100K)",
+        "money": "About $200 per store (one guide claims $1,500+ per loop)",
         "ps5": "Unspecified",
         "xbox": "Reported",
         "pc": "Not released",
-        "repro": "Isolated",
-        "status": "Unverified",
+        "repro": "Repeatable",
+        "status": "Unpatched",
         "sp": "Yes",
         "online": "No online mode",
-        "summary": "One video claims that restarting and then quitting a Brian mission clears the cooldown timers on robbed convenience stores so they can be hit again straight away.",
+        "summary": "Restarting and then quitting a mission that opens with a cutscene clears the closed timers on robbed stores, so the same stores can be robbed again straight away. IGN describes the method and several creators show it.",
         "steps": [
-          "Rob convenience store registers until the stores close and show timers on the map.",
-          "Start a \"Meet Brian\" mission that opens with a cutscene.",
-          "During the cutscene, pause and choose Restart Mission.",
-          "After it restarts, pause again, choose Quit Mission and confirm.",
-          "Check the map. The store timers should be gone."
+          "Rob store registers in one area until the stores close and grey out on the map.",
+          "Lose the police, then go to a story mission marker that opens with a cutscene. \"Meet Brian\" is the one most videos use.",
+          "When the cutscene starts, pause and choose Restart Mission.",
+          "When the cutscene starts again, pause, choose Quit Mission and confirm. Creators say quitting without restarting first is not reliable.",
+          "Check the map. The robbed stores should be open again and you keep the cash. Repeat the route."
         ],
-        "payout": "The video title claims \"100K in minutes\" but gives no per-store amount. Timesaver.GG puts store stick-ups at up to about $200 each, so the title figure is unlikely.",
-        "tips": "Deposit cash at an ATM between stores. The narrator lost all his money when his vehicle was impounded.",
-        "caveats": "Single video, no second source. The narrator is unsure exactly which mission triggers the reset. The narration uses Xbox button prompts but never states the platform or build. Brian is a Chapter 1 contact, so the Chapter 1 cash wipe applies here too.",
-        "reportedBy": "Toughest Glitches",
+        "payout": "Timesaver.GG puts store stick-ups at up to about $200 each, so the loop is slow per store. Pro-Gamer.gg claims $1,500 to $15,000 or more per loop for a Key Lento route, which no other outlet backs up. Video titles claiming \"$100K in minutes\" or \"5 million per hour\" give no per-store figures.",
+        "tips": "Deposit cash at an ATM between loops. One narrator lost all his money when his vehicle was impounded. Pro-Gamer.gg suggests the burger joint and gas station near Jason's house in Key Lento and skipping Ammu-Nation.",
+        "caveats": "IGN and Vice City DB both expect Rockstar to patch this. DamnModz says players report mixed results. Creators do not agree on how it works: most say it resets the store timers, while one video describes it as rolling back to an earlier save while the money carries over. No write-up states the console or build tested, and the first video used Xbox button prompts. If you use it in Chapter 1, the Chapter 1 cash wipe at Tourist Trap applies. games.gg still lists no version-verified money glitch.",
+        "reportedBy": "IGN, Vice City DB, MillGaming, Toughest Glitches, Pro-Gamer.gg",
         "sources": [
+          "ignMoneyGlitch",
+          "vicecitydb",
+          "millgaming",
           "toughest",
+          "progamerMoney",
+          "damnmodz",
           "timesaver",
-          "tech4gamers"
+          "tech4gamers",
+          "gamesggMoney"
         ],
         "carDupe": false
       },
@@ -354,7 +419,7 @@
         "id": "M-05",
         "name": "Vehicle duplication",
         "category": "Duplication claim",
-        "moneyRank": 5,
+        "moneyRank": 6,
         "money": "Unproven",
         "ps5": "Unspecified",
         "xbox": "Unspecified",
@@ -367,14 +432,15 @@
         "steps": [],
         "payout": "Nothing demonstrated. For scale, the most valuable car documented so far, the Pegassi Infernus '96, sells for $17,160 according to GTABase.",
         "tips": "When a method appears, look for an uncut clip showing the balance before and after, a save and reload, and the build number.",
-        "caveats": "The CodeKingGTA repo lists vehicle duplication as \"Unverified for GTA VI\". GTA Online duplication relied on online garages and sessions, and GTA VI has no online mode. Stolen street cars are not kept unless registered, and registered cars are sold from the Stored Vehicles tab at Pay 'n' Spray, which is where any future duplicate would have to be cashed in.",
+        "caveats": "Rechecked on November 20, 2026: both CodeKingGTA repos still list vehicle duplication as \"Unverified for GTA VI\", and the duplication guides that turn up in searches are for GTA Online in GTA V. GTA Online duplication relied on online garages and sessions, and GTA VI has no online mode. Stolen street cars are not kept unless registered, and registered cars are sold from the Stored Vehicles tab at Pay 'n' Spray, which is where any future duplicate would have to be cashed in.",
         "reportedBy": "Community rumor; r/speedrun item 13 notes money glitch claims of unknown validity",
         "sources": [
           "github",
           "gamesggMoney",
           "gtabaseCars",
           "gamesradarSell",
-          "speedrun"
+          "speedrun",
+          "githubV2"
         ],
         "carDupe": true
       },
@@ -382,7 +448,7 @@
         "id": "M-06",
         "name": "Mission payout repetition",
         "category": "Duplication claim",
-        "moneyRank": 6,
+        "moneyRank": 7,
         "money": "Unproven",
         "ps5": "Unspecified",
         "xbox": "Unspecified",
@@ -406,7 +472,7 @@
         "id": "M-07",
         "name": "Infinite fence-selling loop",
         "category": "Duplication claim",
-        "moneyRank": 7,
+        "moneyRank": 8,
         "money": "Unproven",
         "ps5": "Unspecified",
         "xbox": "Unspecified",
@@ -430,7 +496,7 @@
         "id": "M-08",
         "name": "Pre-launch \"unlimited money\" videos",
         "category": "Hoax or scam",
-        "moneyRank": 8,
+        "moneyRank": 9,
         "money": "None (not real)",
         "ps5": "Unspecified",
         "xbox": "Unspecified",
@@ -455,7 +521,7 @@
         "id": "M-09",
         "name": "\"A car and a browser\" infinite money thread",
         "category": "Hoax or scam",
-        "moneyRank": 9,
+        "moneyRank": 10,
         "money": "None (not real)",
         "ps5": "Unspecified",
         "xbox": "Unspecified",
@@ -479,7 +545,7 @@
         "id": "M-10",
         "name": "\"Money generator\" sites and apps",
         "category": "Hoax or scam",
-        "moneyRank": 10,
+        "moneyRank": 11,
         "money": "None (not real)",
         "ps5": "Unspecified",
         "xbox": "Unspecified",
@@ -496,6 +562,31 @@
         "reportedBy": "Various",
         "sources": [
           "github"
+        ],
+        "carDupe": false
+      },
+      {
+        "id": "M-11",
+        "name": "Cocaine resale loop claim",
+        "category": "Money exploit",
+        "moneyRank": 5,
+        "money": "Claimed $3,000 to $4,000 per visit",
+        "ps5": "Unspecified",
+        "xbox": "Unspecified",
+        "pc": "Not released",
+        "repro": "Isolated",
+        "status": "Unverified",
+        "sp": "Yes",
+        "online": "No online mode",
+        "summary": "A November 19 video claims a repeatable cocaine-selling loop paying about $15,000 the first time and $3,000 to $4,000 on each later visit. IGN also mentions a variant where players fence the goods first, then save and reload to refill the location.",
+        "steps": [],
+        "payout": "Claimed, not demonstrated: about $15,000 first, then $3,000 to $4,000 per visit.",
+        "tips": "Wait for an uncut clip showing the balance before and after, a save and reload, and the build number.",
+        "caveats": "The CodeKingGTA v2 repo lists it as \"Community claim; not validated\" and has not confirmed that it differs from a normal restocking activity. It is not clear whether the video and the variant IGN mentions are the same method. It may simply be the warehouse respawn (M-01) at another location.",
+        "reportedBy": "CodeKingGTA v2 repo; IGN",
+        "sources": [
+          "githubV2",
+          "ignMoneyGlitch"
         ],
         "carDupe": false
       },
@@ -631,6 +722,55 @@
         "carDupe": false
       },
       {
+        "id": "V-06",
+        "name": "Tractor trailer rears up or launches into the air",
+        "category": "Vehicle launch",
+        "moneyRank": 99,
+        "money": "None",
+        "ps5": "Unspecified",
+        "xbox": "Unspecified",
+        "pc": "Not released",
+        "repro": "Recurring",
+        "status": "Unpatched",
+        "sp": "Yes",
+        "online": "No online mode",
+        "summary": "A truck's trailer suddenly tips up into the air and lands on the player's convertible. A separate clip cited by Futurism shows a tractor trailer exploding for no visible reason and launching hundreds of feet up.",
+        "steps": [],
+        "payout": "No money value. Tracked as a physics bug.",
+        "tips": "Keep your distance from trucks with trailers. A crushed car can be lost.",
+        "caveats": "No fix announced. Rockstar has published no patch notes or known-issues list as of build 1.002.001.",
+        "reportedBy": "Ibbytee via kingy.wiki; Futurism",
+        "sources": [
+          "kingy",
+          "futurism"
+        ],
+        "carDupe": false
+      },
+      {
+        "id": "V-07",
+        "name": "Scooter takes off after rear-ending a police car",
+        "category": "Vehicle launch",
+        "moneyRank": 99,
+        "money": "None",
+        "ps5": "Unspecified",
+        "xbox": "Unspecified",
+        "pc": "Not released",
+        "repro": "Isolated",
+        "status": "Unpatched",
+        "sp": "Yes",
+        "online": "No online mode",
+        "summary": "A scooter that rear-ends a police car lifts off \"like an airplane\", according to a clip cited by Futurism.",
+        "steps": [],
+        "payout": "No money value. Tracked as a physics bug.",
+        "tips": "",
+        "caveats": "No fix announced. Rockstar has published no patch notes or known-issues list as of build 1.002.001.",
+        "reportedBy": "Futurism",
+        "sources": [
+          "futurism"
+        ],
+        "carDupe": false
+      },
+      {
         "id": "F-01",
         "name": "Pilotless plane passes through buildings",
         "category": "Flying anomaly",
@@ -753,6 +893,30 @@
         "reportedBy": "Player clip covered by La-Lista",
         "sources": [
           "lalista"
+        ],
+        "carDupe": false
+      },
+      {
+        "id": "F-06",
+        "name": "Alligator drifting through the sky",
+        "category": "Flying anomaly",
+        "moneyRank": 99,
+        "money": "None",
+        "ps5": "Unspecified",
+        "xbox": "Unspecified",
+        "pc": "Not released",
+        "repro": "Isolated",
+        "status": "Unpatched",
+        "sp": "Yes",
+        "online": "No online mode",
+        "summary": "An alligator floats high above a flooded yard and glides across the sky for several seconds instead of falling.",
+        "steps": [],
+        "payout": "No money value. Tracked as a physics bug.",
+        "tips": "",
+        "caveats": "No fix announced. Rockstar has published no patch notes or known-issues list as of build 1.002.001.",
+        "reportedBy": "ZEDA via kingy.wiki",
+        "sources": [
+          "kingy"
         ],
         "carDupe": false
       },
@@ -1127,7 +1291,7 @@
         "status": "Unpatched",
         "sp": "Yes",
         "online": "No online mode",
-        "summary": "Small visual clipping noted by reviewers: binoculars through a character's back and a floating shovel on Xbox, geometry oddities on PS5, seated characters through chairs.",
+        "summary": "Small visual clipping noted by reviewers: binoculars through a character's back and a floating shovel on Xbox, geometry oddities on PS5, seated characters through chairs. A newer clip shows a fallen palm trunk passing straight through a parked pickup.",
         "steps": [],
         "payout": "No money value. Tracked as a physics bug.",
         "tips": "",
@@ -1135,7 +1299,57 @@
         "reportedBy": "TheXboxHub, Noisy Pixel, official Discord reports",
         "sources": [
           "gamemapa",
-          "everygame"
+          "everygame",
+          "kingy"
+        ],
+        "carDupe": false
+      },
+      {
+        "id": "C-16",
+        "name": "Garage door exit drops the character underwater beneath the map",
+        "category": "Map clipping",
+        "moneyRank": 99,
+        "money": "None",
+        "ps5": "Unspecified",
+        "xbox": "Reported",
+        "pc": "Not released",
+        "repro": "Isolated",
+        "status": "Unpatched",
+        "sp": "Yes",
+        "online": "No online mode",
+        "summary": "Right after walking out of a garage door, the camera clips into the scenery and the character is swimming under the map. The player surfaces and climbs out at a dock.",
+        "steps": [],
+        "payout": "No money value. Tracked as a physics bug.",
+        "tips": "Swim to open water and surface, or reload a manual save.",
+        "caveats": "No fix announced. Rockstar has published no patch notes or known-issues list as of build 1.002.001.",
+        "reportedBy": "KingAlexHD via kingy.wiki",
+        "sources": [
+          "kingy"
+        ],
+        "carDupe": false
+      },
+      {
+        "id": "C-17",
+        "name": "Character drops beneath the city at night, then returns",
+        "category": "Map clipping",
+        "moneyRank": 99,
+        "money": "None",
+        "ps5": "Unspecified",
+        "xbox": "Unspecified",
+        "pc": "Not released",
+        "repro": "Recurring",
+        "status": "Unpatched",
+        "sp": "Yes",
+        "online": "No online mode",
+        "summary": "The character falls through the ground into a dark void with the city visible from below, then is placed back on a street a few seconds later. Futurism describes a similar fall through a prison floor that ends in the middle of a busy road.",
+        "steps": [],
+        "payout": "No money value. Tracked as a physics bug.",
+        "tips": "",
+        "caveats": "No fix announced. Rockstar has published no patch notes or known-issues list as of build 1.002.001.",
+        "reportedBy": "KADEADU via kingy.wiki; Futurism",
+        "sources": [
+          "kingy",
+          "futurism"
         ],
         "carDupe": false
       },
@@ -1178,7 +1392,7 @@
         "status": "Unpatched",
         "sp": "Yes",
         "online": "No online mode",
-        "summary": "Props hang in the air, such as a coffee cup after a character switch and floating items on PS5 Pro.",
+        "summary": "Props hang in the air, such as a coffee cup after a character switch, floating items on PS5 Pro and a bottle that follows a character around a house.",
         "steps": [],
         "payout": "No money value. Tracked as a physics bug.",
         "tips": "",
@@ -1186,7 +1400,8 @@
         "reportedBy": "Review outlets cited by Beebom and games.gg",
         "sources": [
           "beebomBugs",
-          "gamesggBugs"
+          "gamesggBugs",
+          "kingy"
         ],
         "carDupe": false
       },
@@ -1368,6 +1583,17 @@
         ]
       },
       {
+        "stage": "Chapter not stated",
+        "method": "Demolition races at Ambrosia Raceway",
+        "payout": "$1,900 to $6,300 per win",
+        "note": "Legal and repeatable, rental cars only. Wreck every other car and you win by default. PC Gamer reports $3,800 on the oval and $6,300 on the figure eight; IGN lists maximum payouts of $1,900 and $3,150 with a buy-in from $190 and a rental from $150. No guide states which chapter opens it.",
+        "sources": [
+          "pcgamerMoney",
+          "ignRacing",
+          "timesaver"
+        ]
+      },
+      {
         "stage": "Chapter 3",
         "method": "Standard-tracker cars at Pay 'n' Spray",
         "payout": "$2,500 to $4,000 per car",
@@ -1442,7 +1668,7 @@
         "title": "Spend it, do not hoard it",
         "do": [
           "Play the story. PowerPyx calls farming here pointless because the money is lost when the chapter ends.",
-          "For Chapter 1 spending money, run the Apollo Aggregates warehouse respawn and sell to Brian or Donnie.",
+          "For Chapter 1 spending money, run the Apollo Aggregates warehouse respawn (M-01) and sell to Brian or Donnie, or loop the store robbery reset (M-03). Stealthy Gaming advises skipping both until Chapter 2 because this cash is wiped.",
           "Before the mission Recalibration, make a manual save in a separate slot.",
           "Before starting Tourist Trap, deposit your cash at an ATM and move $5,000 from checking into Family Savings to reach the first savings goal."
         ],
@@ -1457,7 +1683,9 @@
           "tech4gamers",
           "beebomMoney",
           "gtaboom",
-          "gamesradarMoney"
+          "gamesradarMoney",
+          "stealthyGlitch",
+          "ignMoneyGlitch"
         ]
       },
       {
@@ -1467,11 +1695,16 @@
           "Finish the mission that has you take a vehicle to Moses, then sell him older cars with no tracker.",
           "Steal cars away from his garage. He refuses cars taken too close to it, and the garage reopens about two minutes after each sale.",
           "As Jason, hunt for Bret in Lummox County for side income.",
-          "Fill the $10,000 Family Savings goal when it is offered. That lifts the checking limit from $15,000 to $100,000 so bigger payouts are not held as pending."
+          "Fill the $10,000 Family Savings goal when it is offered. That lifts the checking limit from $15,000 to $100,000 so bigger payouts are not held as pending.",
+          "Optional: the store robbery reset (M-03) keeps working here and the cash is no longer wiped. Stealthy Gaming and Pro-Gamer.gg also say to start the warehouse respawn (M-01) now, but Brian and Donnie are gone, so stash bags go to Dunk in Port Gellhorn after the mission Slam Dunk.",
+          "Hold marked bills for Yasmani in Chapter 3 if you can. Tech4Gamers says no fence in the Keys or Port Gellhorn pays more than Very Low for them.",
+          "Once Ambrosia Raceway is open to you, demolition races are a legal fallback at $1,900 to $6,300 per win depending on the guide."
         ],
-        "expect": "$1,000 to $3,000 per car at three to four minutes each. Up to $2,500 per animal for Bret.",
-        "watch": "No exploit has been shown working in this chapter. Vehicle duplication (M-05) is still an unproven claim. PowerPyx advises against long grinding here because Chapter 3 pays far more.",
+        "expect": "$1,000 to $3,000 per car at three to four minutes each. Up to $2,500 per animal for Bret. No guide gives a Chapter 2 payout for the warehouse respawn sold to Dunk.",
+        "watch": "Both exploits may be patched at any time and DamnModz says players report mixed results. Vehicle duplication (M-05) is still an unproven claim. PowerPyx advises against long grinding here because Chapter 3 pays far more.",
         "exploits": [
+          "M-03",
+          "M-01",
           "M-05"
         ],
         "sources": [
@@ -1479,7 +1712,14 @@
           "timesaver",
           "mygta",
           "powerpyxSavings",
-          "gtabaseSavings"
+          "gtabaseSavings",
+          "stealthyGlitch",
+          "progamerMoney",
+          "ignFences",
+          "tech4gamersFences",
+          "damnmodz",
+          "pcgamerMoney",
+          "ignRacing"
         ]
       },
       {
@@ -1548,17 +1788,17 @@
     ],
     "findings": [
       {
-        "title": "One exploit has real backing",
+        "title": "Two exploits have real backing",
         "paragraphs": [
-          "The Apollo Aggregates warehouse respawn (M-01) is the only money exploit with steps published by several outlets, paying about $8,640 to $14,400 per run according to [[beebomMoney|Beebom]] and [[gtaboom|GTA BOOM]].",
-          "It is a Chapter 1 method. Chapter 1 cash is wiped at Tourist Trap, and money moved into Family Savings carries over but can never be withdrawn, per [[tech4gamers|Tech4Gamers]]."
+          "The Apollo Aggregates warehouse respawn (M-01) still works as of November 20, 2026 and pays about $8,640 to $14,400 per run according to [[beebomMoney|Beebom]] and [[gtaboom|GTA BOOM]]. The store robbery reset (M-03) is now described by [[ignMoneyGlitch|IGN]], which expects Rockstar to patch both.",
+          "Timing is disputed. Chapter 1 cash is wiped at Tourist Trap, per [[tech4gamers|Tech4Gamers]], so [[stealthyGlitch|Stealthy Gaming]] says to wait for Chapter 2. But Brian and Donnie stop buying by then, per [[ignFences|IGN's fence guide]], and no guide shows a Chapter 2 warehouse payout yet."
         ]
       },
       {
         "title": "No car duplication yet",
         "paragraphs": [
-          "Nobody has shown a working vehicle duplication in GTA VI. The [[github|CodeKingGTA research repo]] lists it as unverified, along with mission replay and fence loop rumors.",
-          "Entries M-05 to M-07 stay in the tracker so they can be upgraded when proof appears."
+          "Nobody has shown a working vehicle duplication in GTA VI as of November 20, 2026. The [[github|CodeKingGTA research repo]] and its [[githubV2|v2 repo]] list it as unverified, along with mission replay, fence loop and cocaine resale rumors.",
+          "Entries M-05 to M-07 and M-11 stay in the tracker so they can be upgraded when proof appears."
         ]
       },
       {
@@ -1572,7 +1812,7 @@
     "footnotes": [
       "Reproducibility is an evidence tier, not a measured success rate. No outlet has published percentage rates for any GTA VI glitch.",
       "GTA VI launched on November 19, 2026 for PS5 and Xbox Series X|S only, with no PC version or online mode announced, according to [[cleveland|Cleveland.com]] and the [[senseos|SenseOS platform guide]]. The PC and Online columns stay in the matrix so they can be filled in when that changes.",
-      "\"Unspecified\" means the clip or article does not name the console. Builds 1.002.000 and 1.002.001 shipped before launch without patch notes, per [[stealthy|Stealthy Gaming]], and Rockstar has not published a known-issues list, per [[moneycontrol|Moneycontrol]].",
+      "\"Unspecified\" means the clip or article does not name the console. Builds 1.002.000 and 1.002.001 shipped before launch without patch notes, and no title update had arrived by November 20, 2026, per [[stealthy|Stealthy Gaming]]. Rockstar has not published a known-issues list, per [[moneycontrol|Moneycontrol]].",
       "Payout figures in the money plan come from written guides, not from measurements made for this tracker."
     ]
   };
