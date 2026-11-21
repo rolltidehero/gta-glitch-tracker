@@ -75,6 +75,7 @@ Node.js 18 or newer. No npm packages. Git is optional; pushing needs a remote na
 `.github/workflows/refresh.yml` schedules `node update-tracker.js --auto` every 15 minutes at :03, :18, :33 and :48 UTC. It rebuilds generated files, commits and pushes only when something changes, then asks GitHub Pages to rebuild. Step 13 also watches public pages for possible newer game builds and opens a review issue for new findings. The Money Tracker owns the duplication-claim watch. You can run either workflow by hand from its Actions tab.
 
 The header shows when the update-script step last finished, in Central Time, even if there was no new commit.
+The separate **Data date** shows when the published snapshot was stamped, also in Central Time. It advances on a new day or when the snapshot changes, not on quiet same-day runs.
 
 Limits: a script cannot judge a new glitch write-up or verify a car duplication. Those entries still need a person to edit `tracker-data.json`.
 

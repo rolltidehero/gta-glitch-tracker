@@ -12,7 +12,8 @@
       "buildNote": "Shipped before launch",
       "platformsNote": "No PC version, no online mode",
       "patchNote": "No patch notes published",
-      "repo": "rolltidehero/gta-glitch-tracker"
+      "repo": "rolltidehero/gta-glitch-tracker",
+      "asOfAt": "2026-11-21T18:06:19.967Z"
     },
     "sources": {
       "beebomBugs": {
