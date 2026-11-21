@@ -40,7 +40,10 @@
           </div>
           <p>Track reported vehicle launches, flying anomalies, map clipping and other physics glitches. Each entry lists its evidence and sources.</p>
         </div>
-        <p class="asof">Checked <strong id="asof-date"></strong><br />Game build <strong id="asof-build"></strong></p>
+        <p class="asof">Last successful check<br />
+          <a id="last-check" href="https://github.com/rolltidehero/gta-glitch-tracker/actions/workflows/refresh.yml" aria-live="polite">See workflow history</a><br />
+          Data date <strong id="asof-date"></strong><br />Game build <strong id="asof-build"></strong>
+        </p>
       </header>
 
       <nav class="jump" aria-label="Sections">
@@ -144,5 +147,6 @@
 
     <script src="data.js"></script>
     <script src="app.js"></script>
+    <script src="last-check.js"></script>
   </body>
 </html>
