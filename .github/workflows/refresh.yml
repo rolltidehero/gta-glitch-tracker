@@ -1,8 +1,8 @@
-# Unattended refresh every four hours.
-name: Four-hour refresh
+# Unattended refresh every 15 minutes.
+name: Tracker refresh
 on:
   schedule:
-    - cron: '23 */4 * * *'   # every four hours at minute 23 (UTC)
+    - cron: '3,18,33,48 * * * *'   # every 15 minutes (UTC)
   workflow_dispatch: {}     # lets you run it by hand from the Actions tab
 permissions:
   contents: write           # commit and push the rebuilt files
