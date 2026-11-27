@@ -6,14 +6,14 @@
 
   var DATA = {
     "meta": {
-      "asOf": "November 26, 2026",
+      "asOf": "November 27, 2026",
       "build": "1.002.001",
       "platformsLive": "PS5, Xbox Series X|S",
       "buildNote": "Shipped before launch",
       "platformsNote": "No PC version, no online mode",
       "patchNote": "No patch notes published",
       "repo": "rolltidehero/gta-glitch-tracker",
-      "asOfAt": "2026-11-26T10:43:54.151Z"
+      "asOfAt": "2026-11-27T11:29:04.123Z"
     },
     "sources": {
       "beebomBugs": {
